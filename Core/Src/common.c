@@ -36,19 +36,19 @@ void set(void) {
 		RNSInit(hcanx, &rns);
 		//Encoder dcba(0-swap, 1-keep)  BDC dcba(0-keep, 1-swap) //0x00 0x00 0x
 		RNSSet(&rns, RNS_DEVICE_CONFIG, (float) 0b10100101, (float) fwd_omni, (float) roboconPID);
-		RNSSet(&rns, RNS_X_Y_ENC_CONFIG, 0.125 / 4000 * 3.142, 1.0, 0.125 / 4000 * 3.142, 1.0); //1.0 for nonswap , 2.0 for swap
-		RNSSet(&rns, RNS_F_KCD_PTD, 203.20885/ 204.50492, (float)(0.125 * 3.142 / 203.20885));
-		RNSSet(&rns, RNS_B_KCD_PTD, 203.56232/ 203.60160, (float)(0.125 * 3.142 / 203.56232));
+		RNSSet(&rns, RNS_X_Y_ENC_CONFIG, 0.05 / 4000 * 3.142, 1.0, 0.05 / 4000 * 3.142, 1.0); //1.0 for nonswap , 2.0 for swap
+		RNSSet(&rns, RNS_F_KCD_PTD, 6615.0/ 3854.0, (float)(0.125 * 3.142 / 6615.0));
+		RNSSet(&rns, RNS_B_KCD_PTD, 6589.0/ 6046.0, (float)(0.125 * 3.142 / 6589.0));
 
-		RNSSet(&rns, RNS_F_LEFT_VEL_SATEU, 1.0, 1.0 / 17.9120, 19999.0);
-		RNSSet(&rns, RNS_F_RIGHT_VEL_SATEU, 1.0, 1.0 / 20.7897, 19999.0);
-		RNSSet(&rns, RNS_B_LEFT_VEL_SATEU, 1.0, 1.0 / 18.3077, 19999.0);
-		RNSSet(&rns, RNS_B_RIGHT_VEL_SATEU, 1.0, 1.0 / 18.7605, 19999.0);
+		RNSSet(&rns, RNS_F_LEFT_VEL_SATEU, 1.0, 1.0 / 3.27, 19999.0);
+		RNSSet(&rns, RNS_F_RIGHT_VEL_SATEU, 1.0, 1.0 / 3.52, 19999.0);
+		RNSSet(&rns, RNS_B_LEFT_VEL_SATEU, 1.0, 1.0 / 3.86, 19999.0);
+		RNSSet(&rns, RNS_B_RIGHT_VEL_SATEU, 1.0, 1.0 / 3.61, 19999.0);
 
-		RNSSet(&rns, RNS_F_LEFT_VEL_PID,  3.0, 3.0, 0.0);
-		RNSSet(&rns, RNS_F_RIGHT_VEL_PID, 3.0, 3.0, 0.0);
-		RNSSet(&rns, RNS_B_LEFT_VEL_PID,  3.0, 3.0, 0.0);
-		RNSSet(&rns, RNS_B_RIGHT_VEL_PID, 3.0, 3.0, 0.0);
+		RNSSet(&rns, RNS_F_LEFT_VEL_PID,  1.0, 0.0, 0.0);
+		RNSSet(&rns, RNS_F_RIGHT_VEL_PID, 1.0, 0.0, 0.0);
+		RNSSet(&rns, RNS_B_LEFT_VEL_PID,  1.0, 0.0, 0.0);
+		RNSSet(&rns, RNS_B_RIGHT_VEL_PID, 1.0, 0.0, 0.0);
 
 		RNSSet(&rns, RNS_F_LEFT_VEL_FUZZY_PID_BASE, 0.2, 0.2, 0.2);
 		RNSSet(&rns, RNS_F_LEFT_VEL_FUZZY_PID_PARAM, 0.02, 0.02, 0.02);

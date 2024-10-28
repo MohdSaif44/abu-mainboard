@@ -391,10 +391,19 @@ int counter;
 //Global Declarations
 float x_vel, y_vel, w_vel, v1, v2, v3, v4, d1, d2, d3, d4;         //MODN variables
 float pid_angle_error,pid_angle_output;
-float Filtered_Angle, error_angle;
+float Filtered_Angle, error_angle,x_pos ,y_pos;
+float yaw_angle, target_angle;
 
+typedef struct{
 
-//#define TOPSHOOT(duty)		RBMS_Set_Target_Velocity(&rbms2, TOP_SHOOT, duty);
+	float m1;
+	float m2;
+	float m3;
+	float m4;
+
+} motor_check;
+
+motor_check test;
 
 typedef enum{
 	RNS_PACKET,

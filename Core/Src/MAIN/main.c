@@ -63,12 +63,13 @@ void MainTask(void *argument) {
 
 	while (1) {
 
-//		x_vel = 2*(-ps4.joyL_x*cos(YawAngle*3.14/180)-ps4.joyL_y*sin(YawAngle*3.14/180));
-//		y_vel = 2*(-ps4.joyL_x*sin(YawAngle*3.14/180)+ps4.joyL_y*cos(YawAngle*3.14/180));
-		x_vel = -ps4.joyL_x;
-		y_vel =  ps4.joyL_y;
-
 		update_param();
+
+		x_vel = 1*(-ps4.joyL_x*cos(yaw_angle*3.14/180)-ps4.joyL_y*sin(yaw_angle*3.14/180));
+		y_vel = 1*(-ps4.joyL_x*sin(yaw_angle*3.14/180)+ps4.joyL_y*cos(yaw_angle*3.14/180));
+
+//		x_vel = -2.0*ps4.joyL_x;
+//		y_vel =  2.0*ps4.joyL_y;
 
 		static uint8_t led = 0;
 		if (++led >= 255) {
@@ -94,21 +95,10 @@ void SecondaryTask(void *argument) {
 	}
 }
 
-float yaw_angle;
-
-
-typedef struct{
-
-	float m1;
-	float m2;
-	float m3;
-	float m4;
-
-} motor_check;
-
-motor_check test;
-
 void Calculation(void *argument) { //5ms
+
+	update_param();
+	target_angle = yaw_angle;
 
 	while (1) {
 
@@ -156,7 +146,10 @@ void Error_Handler(void) {
 void update_param(void){
 
 //	RNSEnquire(RNS_COORDINATE_X_Y_Z, &rns);
+//	x_pos 	  = rns.RNS_data.common_buffer[0].data;
+//	y_pos 	  = rns.RNS_data.common_buffer[1].data;
 //	yaw_angle = rns.RNS_data.common_buffer[2].data;
+//	error_angle  = target_angle - yaw_angle;
 	RNSEnquire(RNS_VEL_BOTH, &rns);
 	test.m1 = rns.RNS_data.common_buffer[0].data;
 	test.m2 = rns.RNS_data.common_buffer[1].data;
