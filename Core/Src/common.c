@@ -14,6 +14,16 @@ void set(void) {
 //	watchdoginit(4, 4);   // use the watchdog refresh inside 5ms loop
 	Initialize();
 	PSxSlaveInit(&ps4, &hi2c1);
+	RBMS_Init(&rbms1, &hcan2, RBMS_1234);
+	RBMS_Config(&rbms1, RBMS1, C620, 1.0);
+	RBMS_Config(&rbms1, RBMS2, C620, 1.0);
+	RBMS_Config(&rbms1, RBMS3, C620, 1.0);
+	RBMS_Config(&rbms1, RBMS4, C620, 1.0);
+	RBMS_PID_Init(&rbms1);
+	RBMS_Set_Control_Mode(&rbms1, RBMS1, POSITION);
+	RBMS_Set_Control_Mode(&rbms1, RBMS2, POSITION);
+	RBMS_Set_Control_Mode(&rbms1, RBMS3, POSITION);
+	RBMS_Set_Control_Mode(&rbms1, RBMS4, POSITION);
 //	PMW3901_SlaveInit(&enc, &hi2c2);
 //	Modbus_Init(&modbus, &huart4);
 //	TIMxInit(&htim6, 50, 84);			// 50us use for SoftPWM
@@ -26,7 +36,7 @@ void set(void) {
 	MODNWheelVelInit(&v1, &v2, &v3, &v4, &modn);
 //	MODNWheelDirInit(&d2, &d1, &d3, &d4, &modn);
 	PIDSourceInit(&error_angle, &w_vel, &yaw_pid);
-	PIDGainInit(0.005, 0.5, 0.5, 0.5, 0.35, 0.0, 0.0, 10.0, &yaw_pid);
+	PIDGainInit(0.005, 0.125, 0.125, 1.0, 0.35, 0.0, 0.0, 10.0, &yaw_pid);
 
 }
 	/***NAVI***/
@@ -45,10 +55,10 @@ void set(void) {
 		RNSSet(&rns, RNS_B_LEFT_VEL_SATEU, 1.0, 1.0 / 3.86, 19999.0);
 		RNSSet(&rns, RNS_B_RIGHT_VEL_SATEU, 1.0, 1.0 / 3.61, 19999.0);
 
-		RNSSet(&rns, RNS_F_LEFT_VEL_PID,  1.0, 0.0, 0.0);
-		RNSSet(&rns, RNS_F_RIGHT_VEL_PID, 1.0, 0.0, 0.0);
-		RNSSet(&rns, RNS_B_LEFT_VEL_PID,  1.0, 0.0, 0.0);
-		RNSSet(&rns, RNS_B_RIGHT_VEL_PID, 1.0, 0.0, 0.0);
+		RNSSet(&rns, RNS_F_LEFT_VEL_PID,  2.55, 0.3, 0.0);
+		RNSSet(&rns, RNS_F_RIGHT_VEL_PID, 2.55, 0.3, 0.0);
+		RNSSet(&rns, RNS_B_LEFT_VEL_PID,  3.12, 0.3, 0.0);
+		RNSSet(&rns, RNS_B_RIGHT_VEL_PID, 2.25, 0.4, 0.0);
 
 		RNSSet(&rns, RNS_F_LEFT_VEL_FUZZY_PID_BASE, 0.2, 0.2, 0.2);
 		RNSSet(&rns, RNS_F_LEFT_VEL_FUZZY_PID_PARAM, 0.02, 0.02, 0.02);

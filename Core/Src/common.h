@@ -68,7 +68,7 @@
 
 osEventFlagsId_t evt_id;
 osThreadId_t MainTaskHandle;
-osThreadId_t SecondaryTaskHandle;
+osThreadId_t ServoTaskHandle;
 osThreadId_t CalculationTaskHandle;
 //osThreadId_t ModbusTaskHandle;
 

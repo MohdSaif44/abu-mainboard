@@ -54,7 +54,7 @@ void RBMS_Init(RBMS_t *rbms, CAN_HandleTypeDef *hcan, RBMS_Instance_t instance) 
  * 						  gear_ratio	,	gear ratio of motor
  * 						  wheel_diameter,	wheel diameter of motor
  * Function Return		: None
- * Function Example		: RBMS_Config(&rbms1, RBMS1, C610, 1.0, 0.05);
+ * Function Example		: RBMS_Config(&rbms1, RBMS1, C610, 1.0);
  */
 void RBMS_Config(RBMS_t *rbms, RBMS_Num_t num, RBMS_Controller_t type,
 		float gear_ratio) {
