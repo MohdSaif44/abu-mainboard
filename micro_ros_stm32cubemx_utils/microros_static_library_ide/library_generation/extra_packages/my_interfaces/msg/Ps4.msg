@@ -1,0 +1,10 @@
+uint8[] axes
+uint8 axes1
+uint8 axes2
+uint8 axes3
+uint8 axes4
+uint8 axes5
+uint8 axes6
+uint8 axes7
+uint8 axes8
+int16 buttons
