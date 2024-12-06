@@ -26,12 +26,15 @@
 
 PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
-#define swerve_gear_ratio 	2.9
+#define swerve_gear_ratio 	2.95
 #define swerve_max_turn  	4.0
 #define robot_width   		0.616
 #define robot_lenght  		0.616
+#define BASKET_Y            10
+#define BASKET_X            3.75
 
-#define hall_sensor1_pin	GPIOC, GPIO_PIN_8           // TIM8_CH3, TIM3_CH3
+
+#define hall_sensor1_pin	GPIOC, GPIO_PIN_8
 #define hall_sensor2_pin	GPIOB, GPIO_PIN_14
 #define hall_sensor3_pin	GPIOD, GPIO_PIN_3
 #define hall_sensor4_pin	GPIOD, GPIO_PIN_4
@@ -92,19 +95,21 @@ osSemaphoreId_t MainSemaphore;
 typedef union{
 	uint32_t flags;
 	struct{
-		//Least significant 16 bits can be cleared all at once by
-		//sys.flags = 0 for example during emergency
+
+		/*Least significant 16 bits can be cleared all at once by
+				sys.flags = 0 for example during emergency*/
+
 		unsigned control      :1;
 		unsigned tunePid      :1;
 		unsigned tunePidex    :1;
 		unsigned tunePP		  :1;
 		unsigned manual       :1;
-		unsigned auto2manual  :1;
+		unsigned automatic	  :1;
 		unsigned ppstart      :1;
 		unsigned ppend		  :1;
-		unsigned stickf       :1;
-		unsigned legmode      :2;
-		unsigned updateLcd    :1;
+		unsigned shot         :1;
+		unsigned tuning       :1;
+		unsigned side         :1;
 		unsigned flag11       :1;
 		unsigned flag12       :1;
 		unsigned flag13       :1;
@@ -112,7 +117,7 @@ typedef union{
 		unsigned ros_ready    :1;
 
 
-		//Most significant 16 bits are not clear
+		//Most significant 16 bits are not cleared
 
 		unsigned flag16		  :1;
 		unsigned flag17		  :1;
@@ -130,22 +135,7 @@ typedef union{
 		unsigned flag29		  :1;
 		unsigned flag30		  :1;
 		unsigned flag31		  :1;
-		unsigned r_belt_run	  :1;
-		unsigned r_belt_plant :1;
-		unsigned BELT1_PLANT  :1;
-		unsigned ARM1A_PLANT  :1;
-		unsigned ARM1B_PLANT  :1;
-		unsigned ARM2A_PLANT  :1;
-		unsigned ARM2B_PLANT  :1;
-		unsigned BELT2_PLANT  :1;
-		unsigned load_seed	  :1;
 
-		//A flag can use more than 1 bit
-		//Example : Combine flag30 and flag31
-		//unsigned flag29     :1;
-		//unsigned flag30     :2;
-		//the value of sys.flag30 range from 0 to 3 then overflow to 0 again and vice versa
-		//the value of flag29 is not affected when flag30 overflow
 	};
 
 }sys_t;
@@ -153,5 +143,7 @@ typedef union{
 volatile sys_t sys;
 
 void RNS_config(CAN_HandleTypeDef* hcanx);
+
+void update_param(void);
 
 #endif /* INC_COMMON_H_ */

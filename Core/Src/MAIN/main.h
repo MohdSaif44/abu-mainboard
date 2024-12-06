@@ -22,8 +22,6 @@ void Microros(void *argument);
 
 void subscription_callback (const void * msgin);
 
-void update_param(void);
-
 #ifdef __cplusplus
 }
 #endif

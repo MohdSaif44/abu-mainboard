@@ -485,6 +485,20 @@ enum{
 
 };
 
+enum{
+
+	FIRSTSHOT = 0,
+	SECONDSHOT,
+	THIRDSHOT,
+	FORTHSHOT,
+	FIFTHSHOT,
+	SIXTHSHOT,
+	SEVENTHSHOT,
+	EIGHTSHOT,
+	NINTHSHOT,
+
+};
+
 
 void Initialize (void);
 void CAN_PROCESS(PACKET_t packet_src);

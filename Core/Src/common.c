@@ -87,4 +87,10 @@ void kalman_filter_update(void){
 
 }
 
+void shooter_heading(float x_pos, float y_pos){
+
+	atan2f(y_pos - BASKET_Y, x_pos - BASKET_X);
+
+}
+
 

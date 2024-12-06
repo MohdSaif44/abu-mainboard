@@ -319,7 +319,7 @@ void RBMS_ACST_Calculation(RBMS_t *rbms, RBMS_Num_t num) {
 	rbms->motor[num].raw_rotor_pos = rbms->motor[num].cycle_cnt * 8192
 			+ (int16_t) rbms->motor[num].raw_pos - rbms->motor[num].offset_raw_pos;
 	rbms->motor[num].rotor_pos = (float) rbms->motor[num].raw_rotor_pos / 8192.0;
-	rbms->motor[num].shaft_pos = rbms->motor[num].rotor_pos / rbms->motor[num].type_gear_ratio;
+	rbms->motor[num].shaft_pos = rbms->motor[num].rotor_pos / rbms->motor[num].type_gear_ratio - rbms->motor[num].offset_pos*rbms->motor[num].config.gear_ratio;
 	rbms->motor[num].pos = rbms->motor[num].shaft_pos / rbms->motor[num].config.gear_ratio - rbms->motor[num].offset_pos;
 	rbms->motor[num].rpm = (float) rbms->motor[num].raw_rpm
 			/ rbms->motor[num].type_gear_ratio;

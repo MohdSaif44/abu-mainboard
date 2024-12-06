@@ -22,7 +22,7 @@ void SwerveInit(int swerve_type, int turn_mode, float maximum_turn, float width,
 		MODNWheelVelInit(&v1, &v2, &v3, &v4, &modn);
 		MODNWheelDirInit(&d1, &d2, &d3, &d4, &modn);
 
-		VESCInit(VESC4, VESC2, VESC3, VESC1, &vesc); //FL,FR,BL,BR
+		VESCInit(VESC3, VESC4, VESC1, VESC2, &vesc); //FL,FR,BL,BR
 
 		RBMS_Init(&rbms1, &hcan2, RBMS_1234);
 		RBMS_Config(&rbms1, RBMS1, C610, swerve_gear_ratio);//FL
@@ -115,10 +115,10 @@ void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, f
 
 					VESCPDC(swerve.fvel[0], swerve.fvel[1], swerve.fvel[2], swerve.fvel[3], &vesc);
 
-					RBMS_Set_Target_Position(&rbms1, RBMS1, swerve.finalang[0] / 360.0);
+					RBMS_Set_Target_Position(&rbms1, RBMS4, swerve.finalang[0] / 360.0);
 					RBMS_Set_Target_Position(&rbms1, RBMS2, swerve.finalang[1] / 360.0);
 					RBMS_Set_Target_Position(&rbms1, RBMS3, swerve.finalang[2] / 360.0);
-					RBMS_Set_Target_Position(&rbms1, RBMS4, swerve.finalang[3] / 360.0);
+					RBMS_Set_Target_Position(&rbms1, RBMS1, swerve.finalang[3] / 360.0);
 				}
 
 				swerve.braketimer = 0;
@@ -253,10 +253,10 @@ void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, f
 
 					VESCPDC(swerve.fvel[0], swerve.fvel[1], swerve.fvel[2], swerve.fvel[3], &vesc);
 
-					RBMS_Set_Target_Position(&rbms1, RBMS4, swerve.finalang[0] / 360.0 + swerve.closestzero[0]);
-					RBMS_Set_Target_Position(&rbms1, RBMS2, swerve.finalang[1] / 360.0 + swerve.closestzero[1]);
-					RBMS_Set_Target_Position(&rbms1, RBMS3, swerve.finalang[2] / 360.0 + swerve.closestzero[2]);
-					RBMS_Set_Target_Position(&rbms1, RBMS1, swerve.finalang[3] / 360.0 + swerve.closestzero[3]);
+					RBMS_Set_Target_Position(&rbms1, RBMS3, swerve.finalang[0] / 360.0 + swerve.closestzero[0]);
+					RBMS_Set_Target_Position(&rbms1, RBMS4, swerve.finalang[1] / 360.0 + swerve.closestzero[1]);
+					RBMS_Set_Target_Position(&rbms1, RBMS1, swerve.finalang[2] / 360.0 + swerve.closestzero[2]);
+					RBMS_Set_Target_Position(&rbms1, RBMS2, swerve.finalang[3] / 360.0 + swerve.closestzero[3]);
 
 				}
 				swerve.getclosestzero = 0;
@@ -278,10 +278,10 @@ void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, f
 
 						VESCCurrBrake(brake_current, &vesc);
 
-						RBMS_Set_Target_Position(&rbms1, RBMS4, swerve.finalang[0] / 360.0 + swerve.closestzero[0]);
+						RBMS_Set_Target_Position(&rbms1, RBMS1, swerve.finalang[0] / 360.0 + swerve.closestzero[0]);
 						RBMS_Set_Target_Position(&rbms1, RBMS2, swerve.finalang[1] / 360.0 + swerve.closestzero[1]);
 						RBMS_Set_Target_Position(&rbms1, RBMS3, swerve.finalang[2] / 360.0 + swerve.closestzero[2]);
-						RBMS_Set_Target_Position(&rbms1, RBMS1, swerve.finalang[3] / 360.0 + swerve.closestzero[3]);
+						RBMS_Set_Target_Position(&rbms1, RBMS4, swerve.finalang[3] / 360.0 + swerve.closestzero[3]);
 					}
 					else
 					{
@@ -444,76 +444,76 @@ void SwerveAlign(float A_angle, float B_angle, float C_angle, float D_angle, GPI
 
 				if (fabs(swerve.alignerror[0])>180.0)
 				{
-					if((swerve.alignerror[0] > 5.0))
-					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos - 0.0001); }
-					else if(swerve.alignerror[0] < -5.0)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos + 0.0001); }
+					if((swerve.alignerror[0] > 2.0))
+					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos - 0.0002); }
+					else if(swerve.alignerror[0] < -2.0)
+					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos + 0.0002); }
 					else if(!IP9_IN)
 					{ swerve.aligndone[0] = 1; }
 				}
 				else
 				{
-					if((swerve.alignerror[0] > 5.0))
-					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos + 0.0001); }
-					else if(swerve.alignerror[0] < -5.0)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos - 0.0001); }
+					if((swerve.alignerror[0] > 2.0))
+					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos + 0.0002); }
+					else if(swerve.alignerror[0] < -2.0)
+					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos - 0.0002); }
 					else if(!IP9_IN)
 					{ swerve.aligndone[0] = 1; }
 				}
 
 				if (fabs(swerve.alignerror[1])>180.0)
 				{
-					if((swerve.alignerror[1] > 5.0))
-					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos - 0.0001); }
-					else if(swerve.alignerror[1] < -5.0)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos + 0.0001); }
+					if((swerve.alignerror[1] > 2.0))
+					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos - 0.0002); }
+					else if(swerve.alignerror[1] < -2.0)
+					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos + 0.0002); }
 					else if(!IP5_IN)
 					{ swerve.aligndone[1] = 1; }
 				}
 				else
 				{
-					if((swerve.alignerror[1] > 5.0))
-					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos + 0.0001); }
-					else if(swerve.alignerror[1] < -5.0)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos - 0.0001); }
+					if((swerve.alignerror[1] > 2.0))
+					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos + 0.0002); }
+					else if(swerve.alignerror[1] < -2.0)
+					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos - 0.0002); }
 					else if(!IP5_IN)
 					{ swerve.aligndone[1] = 1; }
 				}
 
 				if (fabs(swerve.alignerror[2])>180.0)
 				{
-					if((swerve.alignerror[2] > 5.0))
-					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos - 0.0001); }
-					else if(swerve.alignerror[2] < -5.0)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos + 0.0001); }
+					if((swerve.alignerror[2] > 2.0))
+					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos - 0.0002); }
+					else if(swerve.alignerror[2] < -2.0)
+					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos + 0.0002); }
 					else if(!IP11_IN)
 					{ swerve.aligndone[2] = 1; }
 				}
 				else
 				{
-					if((swerve.alignerror[2] > 5.0))
-					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos + 0.0001); }
-					else if(swerve.alignerror[2] < -5.0)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos - 0.0001); }
+					if((swerve.alignerror[2] > 2.0))
+					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos + 0.0002); }
+					else if(swerve.alignerror[2] < -2.0)
+					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos - 0.0002); }
 					else if(!IP11_IN)
 					{ swerve.aligndone[2] = 1; }
 				}
 
 				if (fabs(swerve.alignerror[3])>180.0)
 				{
-					if((swerve.alignerror[3] > 5.0))
-					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos - 0.0001); }
-					else if(swerve.alignerror[3] < -5.0)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos + 0.0001); }
+					if((swerve.alignerror[3] > 2.0))
+					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos - 0.0002); }
+					else if(swerve.alignerror[3] < -2.0)
+					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos + 0.0002); }
 					else if(!IP12_IN)
 					{ swerve.aligndone[3] = 1; }
 				}
 				else
 				{
-					if((swerve.alignerror[3] > 5.0))
-					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos + 0.0001); }
-					else if(swerve.alignerror[3] < -5.0)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos - 0.0001); }
+					if((swerve.alignerror[3] > 2.0))
+					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos + 0.0002); }
+					else if(swerve.alignerror[3] < -2.0)
+					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos - 0.0002); }
 					else if(!IP12_IN)
 					{ swerve.aligndone[3] = 1; }
 				}
@@ -525,6 +525,10 @@ void SwerveAlign(float A_angle, float B_angle, float C_angle, float D_angle, GPI
 					rbms1.motor[1].reset_pos = 1;
 					rbms1.motor[2].reset_pos = 1;
 					rbms1.motor[3].reset_pos = 1;
+					rbms1.motor[0].offset_pos = -0.25;
+					rbms1.motor[1].offset_pos = -0.25;
+					rbms1.motor[2].offset_pos = -0.25;
+					rbms1.motor[3].offset_pos = -0.25;
 				}
 			}
 		}
