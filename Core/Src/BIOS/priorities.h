@@ -58,7 +58,7 @@ PRIORITY THAN THIS! (higher priorities are lower numeric values. */
 #define I2C3_EV_IRQ_PRIO 		9
 #define I2C3_ER_IRQ_PRIO 	 	0
 #define UART1_RX_IRQ_PRIO		1
-#define UART2_RX_IRQ_PRIO		10     //When needed
+#define UART2_RX_IRQ_PRIO		1     //When needed
 #define UART3_RX_IRQ_PRIO		1
 #define UART4_RX_IRQ_PRIO		1     //30ms
 #define UART5_RX_IRQ_PRIO		1

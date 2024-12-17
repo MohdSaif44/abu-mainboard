@@ -21,6 +21,7 @@ extern "C" {
 #include <std_msgs/msg/int16.h>
 #include <utmrbc_msgs/msg/odometry.h>
 #include <utmrbc_msgs/msg/local.h>
+#include <std_msgs/msg/float32.h>
 
 
 /* Declerations ------------------------------------------------------------------*/
@@ -35,15 +36,16 @@ void microros_init(void* custom_transport_handler, const char * node_name, const
 rclc_support_t support;
 rcl_allocator_t allocator;
 rcl_node_t node, node_1, node_2;
-rclc_executor_t executor;
+rclc_executor_t executor, executor2;
 
 /* Default examples ------------------------------------------------------------------*/
 rcl_publisher_t publisher;
-rcl_subscription_t subscriber;
+rcl_subscription_t subscriber, subscriber2;
 //rcl_service_t service;
 //rcl_client_t client;
 utmrbc_msgs__msg__Odometry ekf_msg;
 utmrbc_msgs__msg__Local local_msg;
+std_msgs__msg__Float32 Float32;
 //nav_msgs__msg__Odometry odom_filtered_msg;
 //example_interfaces__srv__AddTwoInts_Request request_msg;
 //example_interfaces__srv__AddTwoInts_Request__Sequence sequence_msg;

@@ -42,7 +42,7 @@ void Initialize() {
 	/*Normal IOs*/
 	GPIOPinsInit(IP1_PIN,  GPIO_MODE_INPUT, GPIO_SPEED_FREQ_MEDIUM, GPIO_PULLUP);
 	GPIOPinsInit(IP2_PIN,  GPIO_MODE_INPUT, GPIO_SPEED_FREQ_MEDIUM, GPIO_PULLUP);
-	GPIOPinsInit(IP3_PIN,  GPIO_MODE_INPUT, GPIO_SPEED_FREQ_MEDIUM, GPIO_PULLUP);
+	GPIOPinsInit(IP3_PIN,  GPIO_MODE_OUTPUT_PP, GPIO_SPEED_FREQ_MEDIUM, GPIO_PULLUP);
 	GPIOPinsInit(IP4_PIN,  GPIO_MODE_INPUT, GPIO_SPEED_FREQ_MEDIUM, GPIO_PULLUP);
 	GPIOPinsInit(IP5_PIN,  GPIO_MODE_INPUT, GPIO_SPEED_FREQ_MEDIUM, GPIO_PULLUP);
 	GPIOPinsInit(IP6_PIN,  GPIO_MODE_INPUT, GPIO_SPEED_FREQ_MEDIUM, GPIO_PULLUP);
@@ -103,6 +103,7 @@ void Initialize() {
 //	I2CxInit (&hi2c1, main_board_1, CLOCK_SPEED_100KHz, ENABLE);
 //	I2CxInit (&hi2c2, main_board_2, CLOCK_SPEED_100KHz, ENABLE);
 //	I2CxInit (&hi2c3, main_board_3, CLOCK_SPEED_100KHz, ENABLE);
+//	IMU_InitI2C(&IMU, &hi2c3);
 //	I2CX_DMA_RX_Init(&hi2c1, &hi2c1_rx_dma, main_board_1, CLOCK_SPEED_100KHz);
 //	I2CX_DMA_RX_Init(&hi2c2, &hi2c2_rx_dma, main_board_2, CLOCK_SPEED_100KHz);
 //	Servo Driver - recommended to use 100KHz I2C as 400KHz hang frequently
@@ -181,7 +182,7 @@ void Initialize() {
 //	GPIO_PULLUP);
 
 	/*****Motor*****/
-	IMU_Init(&IMU, &huart2);
+	IMU_Init(&IMU, &huart5);
 //	ch0x0Init(&ch010, &huart2);
 //	PWMEncoder_Angle(&htim1, GPIOC, GPIO_PIN_0, &enc1);
 //	VESCInit(BOTTOMSHOOT, LOADING, 0, 0, &vesc);

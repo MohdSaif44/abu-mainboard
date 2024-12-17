@@ -204,6 +204,8 @@ void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c){
 //	sprintf(data,"L2: %f R2: %f \n",ps4.joyL_2,ps4.joyR_2);
 //	UARTPrintString(&huart5, data);
 //	PSx_MasterHandler(&ps4);
+	IMU_I2CHandle(&IMU);
+
 
 }
 //{

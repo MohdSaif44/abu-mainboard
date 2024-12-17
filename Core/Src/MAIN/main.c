@@ -6,13 +6,14 @@
  * @retval int
  */
 
+
 int main(void) {
 
 	set();
 
-	const osThreadAttr_t MicrorosTask_attributes =
-	{ .name = "MicrorosTask", .stack_size = 3000 * 4,
-			.priority = (osPriority_t) osPriorityHigh, };
+//	const osThreadAttr_t MicrorosTask_attributes =
+//	{ .name = "MicrorosTask", .stack_size = 3000 * 4,
+//			.priority = (osPriority_t) osPriorityHigh, };
 
 	const osThreadAttr_t MainTask_attributes =
 	{ .name = "MainTask", .stack_size = 256 * 4,
@@ -26,14 +27,15 @@ int main(void) {
 	{ .name = "CalculationTask", .stack_size = 256 * 4,
 			.priority = (osPriority_t) osPriorityNormal, };
 
-	const osSemaphoreAttr_t CalcSemaphore_attributes = { .name = "CalcSemaphore" };
-	const osSemaphoreAttr_t MainSemaphore_attributes = { .name = "MainSemaphore" };
+	const osSemaphoreAttr_t CalcSemaphore_attributes 	 = { .name = "CalcSemaphore" };
+	const osSemaphoreAttr_t PathplanSemaphore_attributes = { .name = "PathplanSemaphore" };
+	const osSemaphoreAttr_t MainSemaphore_attributes 	 = { .name = "MainSemaphore" };
 
 
 	osKernelInitialize();
 
 	MainTaskHandle		  = osThreadNew(MainTask, NULL, &MainTask_attributes);
-	MicrorosTaskHandle    = osThreadNew(Microros, NULL, &MicrorosTask_attributes);
+//	MicrorosTaskHandle    = osThreadNew(Microros, NULL, &MicrorosTask_attributes);
 	SecondaryTaskHandle   = osThreadNew(SecondaryTask, NULL, &SecondaryTask_attributes);
 	CalculationTaskHandle = osThreadNew(Calculation, NULL, &CalculationTask_attributes);
 	CalcSemaphore 		  = osSemaphoreNew(1, 0, &CalcSemaphore_attributes);
@@ -52,28 +54,68 @@ void TIM7_IRQHandler(void) { 		// 1ms
 
 	static uint8_t led = 0;
 	static uint8_t calc_count = 0;
+	static uint8_t rbms_count = 0;
 
 	osSemaphoreRelease(MainSemaphore);
 
 	if (++calc_count > 7){
+		vel_ramp();
 		osSemaphoreRelease(CalcSemaphore);
+		osSemaphoreRelease(PathplanSemaphore);
 	}
 
-	if (++led > 19){
+	if(++rbms_count>4){
+		RBMS_5ms(&rbms2);
+		RBMS_Set_Target_Velocity(&rbms2, RBMS5, rbms5);
+		RBMS_Set_Target_Position(&rbms2, RBMS6, rbms6);
+		RBMS_Set_Target_Position(&rbms2, RBMS7, rbms7);
+		shaft2 = shaft1 - rbms2.motor[1].shaft_pos;
+		rbms_count = 0;
+	}
+
+
+	if (++led > 25){
 		led1 = !led1;
 		led = 0;
 		PSxConnectionHandler(&ps4);
+//		HAL_I2C_Master_Receive_IT(&hi2c3, 0x35 << 1, (uint8_t*)IMU.Buffer, 20);
 	}
 
 	HAL_TIM_IRQHandler(&htim7);
 }
 
+char buffer_transmit[50];
+
+uint8_t hall1,hall2,hall3,hall4;
 
 void MainTask(void *argument) {
 
+	z_target_angle = 0.0;
+
 	while (1) {
 
+
+
 		osSemaphoreAcquire(MainSemaphore, osWaitForever);
+
+		if(ps4.button & SQUARE){
+
+			IP3_OUT = 1;
+			osDelay(1000);
+
+		}
+		else{
+
+			IP3_OUT = 0;
+
+		}
+			__HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_2, 1000);
+
+		if(ps4.button & DOWN){
+
+			stop_all();
+
+		}
 
 		static uint8_t led = 0;
 		if (++led >= 255) {
@@ -83,38 +125,154 @@ void MainTask(void *argument) {
 	}
 }
 
-
 void SecondaryTask(void *argument) {
 
 	while (1) {
 
+		osSemaphoreAcquire(PathplanSemaphore, osWaitForever);
+
+		if(ps4.button & UP){
+
+			z_target_angle = 0.0;
+
+		}
+
+		if(ps4.button & L1){
+
+			while(ps4.button & L1);
+
+			L1_count++;
+
+			if(L1_count == 1){
+
+				rbms_rotate = 50;
+				PIDDelayInit(&c_pid);
+
+			}
+
+			if(L1_count == 2){
+
+				rbms_rotate = -50;
+				PIDDelayInit(&c_pid);
+
+
+			}
+
+			if(L1_count > 2){
+
+				L1_count = 0;
+
+			}
+
+		}
+
+		if(ps4.button & R1){
+
+			L1_count = 0;
+
+		}
+
+//		snprintf(buffer_transmit,sizeof(buffer_transmit), "x:%0.3f---y:%0.3f\n",x_ekf_pos,y_ekf_pos);
+//		UARTPrintString(&huart2, buffer_transmit);
+
+		if(sys.automatic){
+
+			demo2_pathplan(3.55, 4.83, 0.03, 0.03);
+
+		}
+
 	}
 }
 
+uint8_t toggle;
 
 void Calculation(void *argument) { 	// 7ms
 
-	sys.manual  = 0;
-	sys.control = 1;
+	sys.manual    = 0;
+	sys.control   = 1;
+	sys.automatic = 0;
 
 	while (1) {
 
 		osSemaphoreAcquire(CalcSemaphore, osWaitForever);
 
+//		if(!IP6_IN){
+
+
+//		}
+
+		hall1 = IP9_IN;
+		hall2 = IP5_IN;
+		hall3 = IP11_IN;
+		hall4 = IP12_IN;
+
+		if(ps4.button == RIGHT){
+
+			comm_can_set_duty(116, 30);
+
+		}
+
 		if(ps4.button == CROSS){
 
-			sys.manual = 1;
+			sys.manual 	   = 1;
+			swerve.aligned = 1;
+//			rbms1.motor[0].offset_pos = -0.25;
+//			rbms1.motor[1].offset_pos = -0.25;
+//			rbms1.motor[2].offset_pos = -0.25;
+//			rbms1.motor[3].offset_pos = -0.25;
+
+		}
+		if(ps4.button == UP){
+
+			shaft1 = rbms2.motor[1].shaft_pos;
+			osDelay(1000);
+			sys.flag11=1;
+
+		}
+
+		if(sys.flag11){
+
+			if(shaft2 > 0.001 || shaft2 < -0.001){
+
+				rbms6 = -0.1;
+				rbms7 = 0.1;
+				sys.flag11 = 0;
+
+			}
+		}
+
+		if(ps4.button == TRIANGLE){
+
+			rbms6 = 0.15;
+			rbms7 = -0.15;
+
+		}
+
+		if(ps4.button == DOWN){
+
+			rbms5 = 0.0;
+			rbms6 = 0.0;
+			rbms7 = 0.0;
+		}
+
+		if(ps4.button == LEFT){
+
+			while(ps4.button == LEFT);
+
+			sys.automatic = 1;
+			sys.manual    = 0;
 
 		}
 
 		if(sys.manual){
 
-			SwerveAlign(158.8, 7.1, 18.9, 17.2, hall_sensor1_pin, hall_sensor2_pin, hall_sensor3_pin, hall_sensor4_pin);
-			SwerveRun(0.1, perspective, 20.0, 5, 0);
+			SwerveAlign(86.0, 226.0, 63.0, 70.0, hall_sensor1_pin, hall_sensor2_pin, hall_sensor3_pin, hall_sensor4_pin);
+
+			SwerveRun(0.17, perspective, 20.0, 30, 0);
 
 			if(swerve.aligned == 1){
 
-				if(fabs(ps4.joyL_x)+fabs(ps4.joyL_y)+fabs(ps4.joyR_2 - ps4.joyL_2) > 0.05){
+				if(fabs(joy_x_vel)+fabs(joy_y_vel)+fabs(w_vel)+fabs(ps4.joyR_2 - ps4.joyL_2) > 0.05){
 
 					swerve.run = 1;
 
@@ -127,7 +285,40 @@ void Calculation(void *argument) { 	// 7ms
 
 		}
 
+		if(sys.automatic){
+
+			SwerveRun(0.1, pathplan, 20.0, 30, 0);
+
+			if(fabs(vx)+fabs(vy) > 0.05){
+
+				swerve.run = 1;
+
+			}else{
+
+				swerve.run = 0;
+			}
+
+		}
+
 		update_param();
+		PID(&imu_rotate);
+
+		if(sys.flag14){
+
+			PID(&c_pid);
+
+		}
+
+		if(L1_count){
+
+			rbms5 = rbms_rotate;
+		}
+
+		else{
+
+			rbms5 = -cx;
+
+		}
 
 		static uint8_t led = 0;
 		if (++led > 50) {
@@ -137,64 +328,81 @@ void Calculation(void *argument) { 	// 7ms
 	}
 }
 
+//void Microros(void *argument){
+//
+//	MX_USB_DEVICE_Init();
+//
+//	microros_init(&hpcd_USB_OTG_FS, "node", 2);
+//
+//	/******* Publisher *******/
+//	rclc_publisher_init_best_effort(
+//	  &publisher,
+//	  &node,
+//	  ROSIDL_GET_MSG_TYPE_SUPPORT(utmrbc_msgs, msg, Odometry),
+//	  "/ekf_input");
+//
+//	/******* Subscriper *******/
+//	rclc_subscription_init_best_effort(
+//	  &subscriber,
+//	  &node,
+//	  ROSIDL_GET_MSG_TYPE_SUPPORT(utmrbc_msgs, msg, Local),
+//	  "/final_pose");
+//
+//	rclc_subscription_init_best_effort(
+//	  &subscriber2,
+//	  &node,
+//	  ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32),
+//	  "/basket_x_coordinate");
+//
+//	rclc_executor_add_subscription(
+//	  &executor,
+//	  &subscriber,
+//	  &local_msg,
+//	  &subscription1_callback,
+//	  ON_NEW_DATA);
+//
+//	rclc_executor_add_subscription(
+//	  &executor,
+//	  &subscriber2,
+//	  &Float32,
+//	  &subscription1_callback,
+//	  ON_NEW_DATA);
+//
+//	while(1){
+//
+//		rclc_executor_spin_some(&executor, 50 * 1000000);
+//		rcl_publish(&publisher, &ekf_msg, NULL);
+//		osDelay(1);
+//
+//	}
+//
+//}
+//
+//
+//
+//void subscription1_callback(const void * msgin){
+//
+//	sys.flag14=1;
+//
+//}
 
-void Microros(void *argument){
-
-	MX_USB_DEVICE_Init();
-
-	microros_init(&hpcd_USB_OTG_FS, "node", 1);
-
-	/******* Publisher *******/
-	rclc_publisher_init_best_effort(
-	  &publisher,
-	  &node,
-	  ROSIDL_GET_MSG_TYPE_SUPPORT(utmrbc_msgs, msg, Odometry),
-	  "/ekf_input");
-
-	/******* Subscriper *******/
-	rclc_subscription_init_best_effort(
-	  &subscriber,
-	  &node,
-	  ROSIDL_GET_MSG_TYPE_SUPPORT(utmrbc_msgs, msg, Local),
-	  "/final_pose");
-
-	rclc_executor_add_subscription(
-	  &executor,
-	  &subscriber,
-	  &local_msg,
-	  &subscription_callback,
-	  ON_NEW_DATA);
-
-	while(1){
-
-		rclc_executor_spin_some(&executor, 50 * 1000000);
-		rcl_publish(&publisher, &ekf_msg, NULL);
-		osDelay(1);
-
-	}
-
-}
-
-void subscription_callback(const void * msgin){
-
-
-}
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+
 
 	if (huart == IMU.huartx) {
 		IMU_Handler(&IMU);
 	}
 
+
 	/*	if(huart == ch010.huartx){
 		ch0x0Handler(&ch010);
-	}
-	 */
+	}*/
+
 
 	/*	else if (huart == modbus.huartx){
 		Modbus_Handler(&modbus);
-	}
-	 */
+	}*/
 
 
 }
@@ -245,6 +453,13 @@ void update_param(void){
 	ekf_msg.imu_linear_ax		= ch010.hi91.acc[1];
 	ekf_msg.imu_linear_ay		= ch010.hi91.acc[0];
 
+	error_x   = target_pos_x - x_ekf_pos;
+	error_y	  =	target_pos_y - y_ekf_pos;
+
+	cam_pos = Float32.data;
+
+	xcam_error = 240 - cam_pos;
+
 	PWMEncoder_Angle_Update(&enc1);
 	PWMEncoder_Angle_Update(&enc2);
 	PWMEncoder_Angle_Update(&enc3);
@@ -253,6 +468,77 @@ void update_param(void){
 	kalman_filter_update();
 
 	quaternion_orientation(ch010.hi91.roll, ch010.hi91.pitch, ch010.hi91.yaw);
+
+}
+
+float clamp(float min,float value,float max){if(value>=max){return max;}else if(value<=min){return min;}else{return value;}}
+
+void vel_ramp(){
+
+	tVx	=	 1.0*(ps4.joyL_x*cos(-IMU.real_zrad)-ps4.joyL_y*sin(-IMU.real_zrad));
+	tVy	=	 1.0*(ps4.joyL_x*sin(-IMU.real_zrad)+ps4.joyL_y*cos(-IMU.real_zrad));
+	tVw = 	-1.0*(ps4.joyR_2 - ps4.joyL_2);
+
+	step_x		=	0.005;
+    step_y		=	0.005;
+    step_w      =   0.005;
+
+    full_step_x	=	tVx-Vx;
+    full_step_y	=	tVy-Vy;
+    full_step_w =   tVw-Vw;
+
+    joy_x_vel+=  clamp(-step_x,full_step_x,step_x);
+    joy_y_vel+=  clamp(-step_y,full_step_y,step_y);
+    joy_w_vel+=  clamp(-step_w,full_step_w,step_w);
+
+    Vx=joy_x_vel;
+    Vy=joy_y_vel;
+    Vw=joy_w_vel;
+}
+
+void demo2_pathplan(float target_x, float target_y, float tolerance_x, float tolerance_y){
+
+	target_pos_x = target_x;
+	target_pos_y = target_y;
+	osDelay(1);
+	PID(&x_pid);
+	PID(&y_pid);
+	osDelay(1);
+	if(fabs(*y_pid.error) < tolerance_x){
+		if(fabs(*x_pid.error) < tolerance_y){
+			*y_pid.error   = 0;
+			*x_pid.error   = 0;
+			*y_pid.out_put = 0;
+			*x_pid.out_put = 0;
+			sys.automatic  = 0;
+			sys.manual     = 1;
+		}
+	}
+
+}
+
+void stop_all(void){
+
+	VESCStop(&vesc);
+	VESCCurrBrake(20, &vesc);
+	vx = 0.0;
+	vy = 0.0;
+	swerve.run = 0;
+	sys.automatic = 0;
+	error_x    = 0;
+	error_y    = 0;
+	xcam_error = 0;
+	PIDDelayInit(&x_pid);
+	PIDDelayInit(&y_pid);
+	PIDDelayInit(&c_pid);
+	*y_pid.error = 0;
+	*x_pid.error = 0;
+	*c_pid.error = 0;
+	*y_pid.out_put = 0;
+	*x_pid.out_put = 0;
+	*c_pid.out_put = 0;
+	reset_enc();
+	sys.manual = 1;
 
 }
 

@@ -21,15 +21,25 @@ void set(void) {
 	KalmanFilter_Init(&enc3.Angle, &filtered_enc3, 1.0, 1.0, 0.001, 1.0, 1.0, &KF3);
 	KalmanFilter_Init(&enc4.Angle, &filtered_enc4, 1.0, 1.0, 0.001, 1.0, 1.0, &KF4);
 	RBMS_Init(&rbms2, &hcan2, RBMS_5678);
-	RBMS_Config(&rbms2, RBMS5, C610, 1);
+	RBMS_Config(&rbms2, RBMS5, C620, 1);
 	RBMS_Config(&rbms2, RBMS6, C610, 1);
 	RBMS_Config(&rbms2, RBMS7, C610, 1);
-	RBMS_Config(&rbms2, RBMS8, C620, 1);
+//	RBMS_Config(&rbms2, RBMS8, C620, 1);
 	RBMS_PID_Init(&rbms2);
 	RBMS_Set_Control_Mode(&rbms2, RBMS5, VELOCITY);
-	RBMS_Set_Control_Mode(&rbms2, RBMS6, VELOCITY);
-	RBMS_Set_Control_Mode(&rbms2, RBMS7, VELOCITY);
-	RBMS_Set_Control_Mode(&rbms2, RBMS8, VELOCITY);
+	RBMS_Set_Control_Mode(&rbms2, RBMS6, POSITION);
+	RBMS_Set_Control_Mode(&rbms2, RBMS7, POSITION);
+//	RBMS_Set_Control_Mode(&rbms2, RBMS8, VELOCITY);
+	//X_pos2111111111111e
+	PIDSourceInit(&error_x, &vx, &x_pid);
+	PIDGainInit(0.007, 0.7, 1.0, 1.0, 5.0, 0.0, 0.0, 20.0, &x_pid);
+	//Y_pos
+	PIDSourceInit(&error_y, &vy, &y_pid);
+	PIDGainInit(0.007, 0.7, 1.0, 1.0, 5.0, 0.0, 0.0, 20.0, &y_pid);
+	//X_cam
+	PIDSourceInit(&xcam_error, &cx, &c_pid);
+	PIDGainInit(0.007, 20.0, 1.2, 1.2, 0.23, 0.01, 0.001, 20.0, &c_pid);
+
 //	TIMxInit(&htim6, 50, 84);			// 50us use for SoftPWM
 //	watchdoginit(4, 4);   // use the watchdog refresh inside 5ms loop
 //	RNS_config(&hcan1);

@@ -26,7 +26,7 @@ void IMU_InitI2C(R6091U_t* IMU, I2C_HandleTypeDef *hi2c){
 	IMU->offset = 0;
 	IMU->yaw_constant = 0;
 	IMU->prev_yaw = 0;
-	HAL_I2C_Master_Receive_IT(IMU->hi2cimu, 0x35 << 1, (uint8_t*)IMU->Buffer, 20);
+//	HAL_I2C_Master_Receive_IT(IMU->hi2cimu, 0x35 << 1, (uint8_t*)IMU->Buffer, 20);
 }
 
 void IMU_InitI2C_DMA(R6091U_t* IMU, I2C_HandleTypeDef *hi2c){
@@ -70,7 +70,7 @@ void IMU_I2CHandle(R6091U_t* IMU){
 	IMU->real_z = IMU->yaw + IMU->yaw_constant * 360.0 + IMU->offset;
 	IMU->real_zrad = (IMU->real_z / 180.0) * 3.141593;
 	memset(IMU->Buffer, 0, 20);
-	HAL_I2C_Master_Receive_IT(IMU->hi2cimu, 0x35 << 1, (uint8_t*)IMU->Buffer, 20);
+//	HAL_I2C_Master_Receive_IT(IMU->hi2cimu, 0x35 << 1, (uint8_t*)IMU->Buffer, 20);
 }
 
 void IMU_DMAHandle(R6091U_t* IMU){

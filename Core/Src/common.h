@@ -26,7 +26,7 @@
 
 PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
-#define swerve_gear_ratio 	2.95
+#define swerve_gear_ratio 	3.00
 #define swerve_max_turn  	4.0
 #define robot_width   		0.616
 #define robot_lenght  		0.616
@@ -90,6 +90,7 @@ osThreadId_t CalculationTaskHandle;
 //osThreadId_t ModbusTaskHandle;
 
 osSemaphoreId_t CalcSemaphore;
+osSemaphoreId_t PathplanSemaphore;
 osSemaphoreId_t MainSemaphore;
 
 typedef union{

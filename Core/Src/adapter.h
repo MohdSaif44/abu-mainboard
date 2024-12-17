@@ -282,7 +282,7 @@ ADC_t adc;
 Laser_t X_laser, Y_laser;
 KALMANFILTER_t kf_adc_x, kf_adc_y, kf_pres;
 Mov_Ave_t move_aveX, move_aveY;
-PID_t pid_pos_x,pid_pos_y,pid_pres,pid_z,imu_rotate;
+PID_t pid_pos_x,pid_pos_y,pid_pres,pid_z,imu_rotate, x_pid, y_pid, c_pid;
 R6091U_t IMU;
 Mov_Ave_t mov_l_r,mov_l_l;
 VESC_t vesc,vesc1;
@@ -296,6 +296,7 @@ KalmanFilter_t KF1,KF2,KF3,KF4;
 
 int counter_rns;
 int counter;
+int swerve_timer;
 
 #ifdef newpin
 #define PB1 		GPIOE_IN->bit3
@@ -393,7 +394,11 @@ int counter;
 float x_vel, y_vel, w_vel, v1, v2, v3, v4, d1, d2, d3, d4;         //MODN variables
 float pid_angle_error,pid_angle_output;
 float filtered_enc1, filtered_enc2, filtered_enc3, filtered_enc4;
-float x_ekf_pos, y_ekf_pos, prev_x_pos, prev_y_pos, x_vel, y_vel, prev_yaw, v_yaw, delta_x_pos, delta_y_pos;
+float x_ekf_pos, y_ekf_pos, prev_x_pos, prev_y_pos, x_vel, y_vel, prev_yaw, v_yaw, delta_x_pos, delta_y_pos, cam_pos;
+float Ax_max, tVx, tVy, tVw, step_w, step_x, step_y, full_step_x, full_step_y, full_step_w, Vw, A_max, Vx, Vy, ax_max, ay_max, joy_x_vel, joy_y_vel, joy_w_vel;
+float cx, vx, vy, error_x, error_y, target_pos_x, target_pos_y, z_target_angle, xcam_error, rbms5, rbms6, rbms7, shaft1, shaft2;
+uint8_t L1_count;
+float rbms_rotate;
 
 typedef enum{
 	RNS_PACKET,

@@ -45,7 +45,7 @@ void SwerveInit(int swerve_type, int turn_mode, float maximum_turn, float width,
 	}
 
 	PIDSourceInit(&pid_angle_error, &pid_angle_output, &imu_rotate);
-	PIDGainInit(0.005, 1.0, 1.0/180.0, 2.0, 15.0, 0.0, 0.5, 200.0, &imu_rotate);
+	PIDGainInit(0.005, 0.75, 0.5, 0.5, 0.45, 0.0, 0.0, 10.0, &imu_rotate);
 	PIDDelayInit(&imu_rotate);
 
 }
@@ -65,7 +65,6 @@ void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, f
 		}
 		else if (mode == manuallock)
 		{
-			pid_angle_error = target_angle - IMU.real_z;
 			PID(&imu_rotate);
 			x_vel = ps4.joyL_x;
 			y_vel = ps4.joyL_y;
@@ -73,13 +72,30 @@ void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, f
 		}
 		else if (mode == perspective)
 		{
-			PIDDelayInit(&imu_rotate);
-			x_vel = (ps4.joyL_x*cos(-IMU.real_zrad)-ps4.joyL_y*sin(-IMU.real_zrad));
-			y_vel = (ps4.joyL_x*sin(-IMU.real_zrad)+ps4.joyL_y*cos(-IMU.real_zrad));
-			w_vel = -(ps4.joyR_2 - ps4.joyL_2)*1.8;
+			pid_angle_error = z_target_angle - IMU.real_z;
+
+			x_vel = joy_x_vel;				/*(ps4.joyL_x*cos(-IMU.real_zrad)-ps4.joyL_y*sin(-IMU.real_zrad));*/
+			y_vel = joy_y_vel;				/*(ps4.joyL_x*sin(-IMU.real_zrad)+ps4.joyL_y*cos(-IMU.real_zrad));*/
+
+			w_vel = joy_w_vel;
+
+			z_target_angle = 0.0;
+
+
+			if(ps4.button & CIRCLE){
+
+				w_vel = (-1)*pid_angle_output;
+
+			}
+
+			/*-(ps4.joyR_2 - ps4.joyL_2)*1.2;*/
 		}
 		else if (mode == pathplan)
 		{
+			pid_angle_error = z_target_angle - IMU.real_z;
+			x_vel = -(vx*cos(-IMU.real_zrad)-vy*sin(-IMU.real_zrad));
+			y_vel = (vx*sin(-IMU.real_zrad)+vy*cos(-IMU.real_zrad));
+			w_vel = (-1)*pid_angle_output;
 
 		}
 
@@ -265,6 +281,7 @@ void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, f
 			}
 			else
 			{
+
 				if (swerve.type == FWD_SWERVE)
 				{
 					swerve.fvel[0] = 0.0;
@@ -336,6 +353,7 @@ void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, f
 					VESCReleaseMotor(&vesc);
 					VESCStop(&vesc);
 				}
+
 			}
 		}
 	}
@@ -437,25 +455,25 @@ void SwerveAlign(float A_angle, float B_angle, float C_angle, float D_angle, GPI
 			}
 			else
 			{
-				swerve.alignerror[0] = A_angle - filtered_enc1;
-				swerve.alignerror[1] = B_angle - filtered_enc2;
-				swerve.alignerror[2] = C_angle - filtered_enc3;
-				swerve.alignerror[3] = D_angle - filtered_enc4;
+				swerve.alignerror[0] = A_angle - enc1.Angle;
+				swerve.alignerror[1] = B_angle - enc2.Angle;
+				swerve.alignerror[2] = C_angle - enc3.Angle;
+				swerve.alignerror[3] = D_angle - enc4.Angle;
 
 				if (fabs(swerve.alignerror[0])>180.0)
 				{
-					if((swerve.alignerror[0] > 2.0))
+					if((swerve.alignerror[0] >1.0))
 					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos - 0.0002); }
-					else if(swerve.alignerror[0] < -2.0)
+					else if(swerve.alignerror[0] <-1.0)
 					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos + 0.0002); }
 					else if(!IP9_IN)
 					{ swerve.aligndone[0] = 1; }
 				}
 				else
 				{
-					if((swerve.alignerror[0] > 2.0))
+					if((swerve.alignerror[0] >1.0))
 					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos + 0.0002); }
-					else if(swerve.alignerror[0] < -2.0)
+					else if(swerve.alignerror[0] <-1.0)
 					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos - 0.0002); }
 					else if(!IP9_IN)
 					{ swerve.aligndone[0] = 1; }
@@ -463,18 +481,18 @@ void SwerveAlign(float A_angle, float B_angle, float C_angle, float D_angle, GPI
 
 				if (fabs(swerve.alignerror[1])>180.0)
 				{
-					if((swerve.alignerror[1] > 2.0))
+					if((swerve.alignerror[1] >1.0))
 					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos - 0.0002); }
-					else if(swerve.alignerror[1] < -2.0)
+					else if(swerve.alignerror[1] <-1.0)
 					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos + 0.0002); }
 					else if(!IP5_IN)
 					{ swerve.aligndone[1] = 1; }
 				}
 				else
 				{
-					if((swerve.alignerror[1] > 2.0))
+					if((swerve.alignerror[1] >1.0))
 					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos + 0.0002); }
-					else if(swerve.alignerror[1] < -2.0)
+					else if(swerve.alignerror[1] <-1.0)
 					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos - 0.0002); }
 					else if(!IP5_IN)
 					{ swerve.aligndone[1] = 1; }
@@ -482,18 +500,18 @@ void SwerveAlign(float A_angle, float B_angle, float C_angle, float D_angle, GPI
 
 				if (fabs(swerve.alignerror[2])>180.0)
 				{
-					if((swerve.alignerror[2] > 2.0))
+					if((swerve.alignerror[2] >1.0))
 					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos - 0.0002); }
-					else if(swerve.alignerror[2] < -2.0)
+					else if(swerve.alignerror[2] <-1.0)
 					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos + 0.0002); }
 					else if(!IP11_IN)
 					{ swerve.aligndone[2] = 1; }
 				}
 				else
 				{
-					if((swerve.alignerror[2] > 2.0))
+					if((swerve.alignerror[2] >1.0))
 					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos + 0.0002); }
-					else if(swerve.alignerror[2] < -2.0)
+					else if(swerve.alignerror[2] <-1.0)
 					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos - 0.0002); }
 					else if(!IP11_IN)
 					{ swerve.aligndone[2] = 1; }
@@ -501,18 +519,18 @@ void SwerveAlign(float A_angle, float B_angle, float C_angle, float D_angle, GPI
 
 				if (fabs(swerve.alignerror[3])>180.0)
 				{
-					if((swerve.alignerror[3] > 2.0))
+					if((swerve.alignerror[3] >1.0))
 					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos - 0.0002); }
-					else if(swerve.alignerror[3] < -2.0)
+					else if(swerve.alignerror[3] <-1.0)
 					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos + 0.0002); }
 					else if(!IP12_IN)
 					{ swerve.aligndone[3] = 1; }
 				}
 				else
 				{
-					if((swerve.alignerror[3] > 2.0))
+					if((swerve.alignerror[3] >1.0))
 					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos + 0.0002); }
-					else if(swerve.alignerror[3] < -2.0)
+					else if(swerve.alignerror[3] <-1.0)
 					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos - 0.0002); }
 					else if(!IP12_IN)
 					{ swerve.aligndone[3] = 1; }
