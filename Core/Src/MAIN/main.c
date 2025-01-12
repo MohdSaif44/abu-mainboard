@@ -1,4 +1,5 @@
 /* Includes ------------------------------------------------------------------*/
+
 #include "main.h"
 
 /**
@@ -13,7 +14,7 @@ int main(void) {
 
 //	const osThreadAttr_t MicrorosTask_attributes =
 //	{ .name = "MicrorosTask", .stack_size = 3000 * 4,
-//			.priority = (osPriority_t) osPriorityHigh, };
+//			.priority = (osPriority_t) osPriorityHigh,   };
 
 	const osThreadAttr_t MainTask_attributes =
 	{ .name = "MainTask", .stack_size = 256 * 4,
@@ -28,7 +29,9 @@ int main(void) {
 			.priority = (osPriority_t) osPriorityNormal, };
 
 	const osSemaphoreAttr_t CalcSemaphore_attributes 	 = { .name = "CalcSemaphore" };
+
 	const osSemaphoreAttr_t PathplanSemaphore_attributes = { .name = "PathplanSemaphore" };
+
 	const osSemaphoreAttr_t MainSemaphore_attributes 	 = { .name = "MainSemaphore" };
 
 
@@ -44,27 +47,29 @@ int main(void) {
 	osKernelStart();
 }
 
+// ssh utmrbc@10.161.47.95
+
+
 void TIM6_DAC_IRQHandler(void) { 	// 10us
 
 	//	SoftPWMUpdate();
 	HAL_TIM_IRQHandler(&htim6);
 }
 
-void TIM7_IRQHandler(void) { 		// 1ms
+void TIM7_IRQHandler(void) { 		// 5ms
 
 	static uint8_t led = 0;
 	static uint8_t calc_count = 0;
 	static uint8_t rbms_count = 0;
 
+	vel_ramp();
+
 	osSemaphoreRelease(MainSemaphore);
+	osSemaphoreRelease(CalcSemaphore);
+	osSemaphoreRelease(PathplanSemaphore);
 
-	if (++calc_count > 7){
-		vel_ramp();
-		osSemaphoreRelease(CalcSemaphore);
-		osSemaphoreRelease(PathplanSemaphore);
-	}
-
-	if(++rbms_count>4){
+/*
+	if(++rbms_count>1){
 		RBMS_5ms(&rbms2);
 		RBMS_Set_Target_Velocity(&rbms2, RBMS5, rbms5);
 		RBMS_Set_Target_Position(&rbms2, RBMS6, rbms6);
@@ -72,31 +77,42 @@ void TIM7_IRQHandler(void) { 		// 1ms
 		shaft2 = shaft1 - rbms2.motor[1].shaft_pos;
 		rbms_count = 0;
 	}
+*/
 
-
-	if (++led > 25){
+	if (++led > 4){
+//		HAL_I2C_Master_Receive_IT(&hi2c3, 0x35 << 1, (uint8_t*)IMU.Buffer, 20);
+		PSxConnectionHandler(&ps4);
 		led1 = !led1;
 		led = 0;
-		PSxConnectionHandler(&ps4);
-//		HAL_I2C_Master_Receive_IT(&hi2c3, 0x35 << 1, (uint8_t*)IMU.Buffer, 20);
 	}
 
 	HAL_TIM_IRQHandler(&htim7);
 }
 
-char buffer_transmit[50];
-
 uint8_t hall1,hall2,hall3,hall4;
+
+float x_factor, y_factor, raw_x, raw_y, actual_x, actual_y;
 
 void MainTask(void *argument) {
 
-	z_target_angle = 0.0;
+	z_target_angle 		= 0.0;
+	vesc.pole_pairs 	= 28;
+	vesc.gear_ratio 	= 2;
+	vesc.wheel_diameter = 0.079;
 
 	while (1) {
 
-
-
 		osSemaphoreAcquire(MainSemaphore, osWaitForever);
+
+
+		x_factor = -(QEIRead(QEI4)* 0.05 * M_PI/ 8192.0);
+		y_factor = (QEIRead(QEI1)* 0.05 * M_PI/ 8192.0);
+
+		actual_x += -(((QEIRead(QEI4) - raw_x)*cos(IMU.real_zrad) - (QEIRead(QEI1) - raw_y)*sin(IMU.real_zrad)) * 0.05 * M_PI/ 8192.0);
+		actual_y +=  (((QEIRead(QEI1) - raw_y)*cos(IMU.real_zrad) + (QEIRead(QEI4) - raw_x)*sin(IMU.real_zrad)) * 0.05 * M_PI/ 8192.0);
+		raw_x =  QEIRead(QEI4);
+		raw_y =  QEIRead(QEI1);
+
 
 		if(ps4.button & SQUARE){
 
@@ -109,7 +125,8 @@ void MainTask(void *argument) {
 			IP3_OUT = 0;
 
 		}
-			__HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_2, 1000);
+
+		__HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_2, 1000);
 
 		if(ps4.button & DOWN){
 
@@ -120,8 +137,10 @@ void MainTask(void *argument) {
 		static uint8_t led = 0;
 		if (++led >= 255) {
 			led2 = !led2;
-			led = 0;
+//			char buffer_transmit[50];
+			 led = 0;
 		}
+
 	}
 }
 
@@ -171,16 +190,6 @@ void SecondaryTask(void *argument) {
 			L1_count = 0;
 
 		}
-
-//		snprintf(buffer_transmit,sizeof(buffer_transmit), "x:%0.3f---y:%0.3f\n",x_ekf_pos,y_ekf_pos);
-//		UARTPrintString(&huart2, buffer_transmit);
-
-		if(sys.automatic){
-
-			demo2_pathplan(3.55, 4.83, 0.03, 0.03);
-
-		}
-
 	}
 }
 
@@ -196,10 +205,7 @@ void Calculation(void *argument) { 	// 7ms
 
 		osSemaphoreAcquire(CalcSemaphore, osWaitForever);
 
-//		if(!IP6_IN){
-
-
-//		}
+		shooter_heading(local_msg.local_x, local_msg.local_y);
 
 		hall1 = IP9_IN;
 		hall2 = IP5_IN;
@@ -215,13 +221,10 @@ void Calculation(void *argument) { 	// 7ms
 		if(ps4.button == CROSS){
 
 			sys.manual 	   = 1;
-			swerve.aligned = 1;
-//			rbms1.motor[0].offset_pos = -0.25;
-//			rbms1.motor[1].offset_pos = -0.25;
-//			rbms1.motor[2].offset_pos = -0.25;
-//			rbms1.motor[3].offset_pos = -0.25;
+//			swerve.aligned = 1;
 
 		}
+
 		if(ps4.button == UP){
 
 			shaft1 = rbms2.motor[1].shaft_pos;
@@ -268,11 +271,11 @@ void Calculation(void *argument) { 	// 7ms
 
 			SwerveAlign(86.0, 226.0, 63.0, 70.0, hall_sensor1_pin, hall_sensor2_pin, hall_sensor3_pin, hall_sensor4_pin);
 
-			SwerveRun(0.17, perspective, 20.0, 30, 0);
+			SwerveRun(1.0, perspective, 20.0, 30, 0);
 
 			if(swerve.aligned == 1){
 
-				if(fabs(joy_x_vel)+fabs(joy_y_vel)+fabs(w_vel)+fabs(ps4.joyR_2 - ps4.joyL_2) > 0.05){
+				if(fabs(joy_x_vel)+fabs(joy_y_vel)+fabs(w_vel)+fabs(ps4.joyR_2 - ps4.joyL_2) > 0.0){
 
 					swerve.run = 1;
 
@@ -321,7 +324,7 @@ void Calculation(void *argument) { 	// 7ms
 		}
 
 		static uint8_t led = 0;
-		if (++led > 50) {
+		if (++led > 4) {
 			led3 = !led3;
 			led = 0;
 		}
@@ -377,14 +380,14 @@ void Calculation(void *argument) { 	// 7ms
 //	}
 //
 //}
-//
-//
-//
-//void subscription1_callback(const void * msgin){
-//
-//	sys.flag14=1;
-//
-//}
+
+
+
+void subscription1_callback(const void * msgin){
+
+	sys.flag14=1;
+
+}
 
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
@@ -395,7 +398,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	}
 
 
-	/*	if(huart == ch010.huartx){
+	/*if(huart == ch010.huartx){
 		ch0x0Handler(&ch010);
 	}*/
 
@@ -414,12 +417,12 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 
 void quaternion_orientation(double roll, double pitch, double yaw){
 
-	double cr = cos(roll * 0.5);
-	double sr = sin(roll * 0.5);
+	double cr = cos(roll  * 0.5);
+	double sr = sin(roll  * 0.5);
 	double cp = cos(pitch * 0.5);
 	double sp = sin(pitch * 0.5);
-	double cy = cos(yaw * 0.5);
-	double sy = sin(yaw * 0.5);
+	double cy = cos(yaw   * 0.5);
+	double sy = sin(yaw   * 0.5);
 
 	ekf_msg.imu_yaw 		  = yaw;
 	ekf_msg.imu_orientation_w = cr * cp * cy + sr * sp * sy;
@@ -430,28 +433,31 @@ void quaternion_orientation(double roll, double pitch, double yaw){
 
 void update_param(void){
 
-	delta_x_pos = CURRENT_X_POS - prev_x_pos;
-	delta_y_pos = CURRENT_Y_POS - prev_y_pos;
 
-	x_ekf_pos  = CURRENT_X_POS + delta_x_pos;
-	y_ekf_pos  = CURRENT_Y_POS + delta_y_pos;
+//	x_ekf_pos  = CURRENT_X_POS + delta_x_pos;
+//	y_ekf_pos  = CURRENT_Y_POS + delta_y_pos;
 
-	x_vel = (delta_x_pos)/0.007;
-	y_vel = (delta_y_pos)/0.007;
-	v_yaw = ((ch010.hi91.yaw - prev_yaw) * M_PI/180.0) / 0.007;
+//	delta_x_pos = CURRENT_X_POS - prev_x_pos;
+//	delta_y_pos = CURRENT_Y_POS - prev_y_pos;
 
-	prev_x_pos = CURRENT_X_POS;
-	prev_y_pos = CURRENT_Y_POS;
+//	x_vel = (delta_x_pos)/0.007;
+//	y_vel = (delta_y_pos)/0.007;
+
+//	v_yaw = ((ch010.hi91.yaw - prev_yaw) * M_PI/180.0) / 0.007;
+
+//	prev_x_pos = CURRENT_X_POS;
+//	prev_y_pos = CURRENT_Y_POS;
 
 	ekf_msg.odom_pose_x = x_ekf_pos;
 	ekf_msg.odom_pose_y = y_ekf_pos;
 
-	ekf_msg.imu_angular_vx		= ch010.hi91.gyr[1];
+/*	ekf_msg.imu_angular_vx		= ch010.hi91.gyr[1];
 	ekf_msg.imu_angular_vy		= ch010.hi91.gyr[0];
 	ekf_msg.imu_angular_vz		= ch010.hi91.gyr[2];
 
-	ekf_msg.imu_linear_ax		= ch010.hi91.acc[1];
-	ekf_msg.imu_linear_ay		= ch010.hi91.acc[0];
+	ekf_msg.imu_linear_ax		= IMU.y_acc;	//ch010.hi91.acc[1];
+	ekf_msg.imu_linear_ay		= IMU.x_acc;	//ch010.hi91.acc[0];
+*/
 
 	error_x   = target_pos_x - x_ekf_pos;
 	error_y	  =	target_pos_y - y_ekf_pos;
@@ -460,18 +466,32 @@ void update_param(void){
 
 	xcam_error = 240 - cam_pos;
 
-	PWMEncoder_Angle_Update(&enc1);
-	PWMEncoder_Angle_Update(&enc2);
-	PWMEncoder_Angle_Update(&enc3);
-	PWMEncoder_Angle_Update(&enc4);
-
 	kalman_filter_update();
 
-	quaternion_orientation(ch010.hi91.roll, ch010.hi91.pitch, ch010.hi91.yaw);
+//	quaternion_orientation(ch010.hi91.roll, ch010.hi91.pitch, IMU.yaw);
 
 }
 
-float clamp(float min,float value,float max){if(value>=max){return max;}else if(value<=min){return min;}else{return value;}}
+float clamp(float min,float value,float max){
+
+	if(value>=max){
+
+		return max;
+
+	}
+
+	else if(value<=min){
+
+		return min;
+
+	}
+
+	else{
+
+		return value;
+
+	}
+}
 
 void vel_ramp(){
 
@@ -479,9 +499,9 @@ void vel_ramp(){
 	tVy	=	 1.0*(ps4.joyL_x*sin(-IMU.real_zrad)+ps4.joyL_y*cos(-IMU.real_zrad));
 	tVw = 	-1.0*(ps4.joyR_2 - ps4.joyL_2);
 
-	step_x		=	0.005;
-    step_y		=	0.005;
-    step_w      =   0.005;
+	step_x		=	0.009;
+    step_y		=	0.009;
+    step_w      =   0.009;
 
     full_step_x	=	tVx-Vx;
     full_step_y	=	tVy-Vy;

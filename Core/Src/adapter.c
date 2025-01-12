@@ -109,11 +109,11 @@ void Initialize() {
 //	Servo Driver - recommended to use 100KHz I2C as 400KHz hang frequently
 //	ServoDriverInit(&srv_drv,&hi2c3,0x40);
 //	UARTx_DMA_Rx_Init(&huart4, &hdma_uart4_rx, 115200);
-//	UARTx_DMA_Rx_Init(&huart3, &hdma_usart3_rx, 115200);
+	UARTx_DMA_Rx_Init(&huart3, &hdma_usart3_rx, 115200);
 //	UARTx_DMA_Rx_Init(&huart2, &hdma_usart2_rx, 115200); //Bluebee Tuning
 //	UARTInit(&huart1, 115200, ENABLE);
 	UARTInit(&huart2, 115200, ENABLE);					//imu
-	UARTInit(&huart3, 115200, ENABLE);					//
+//	UARTInit(&huart3, 115200, ENABLE);					//
 //	UARTInit(&huart4, 115200, ENABLE);					//tfmini
 	UARTInit(&huart5, 115200, ENABLE);					//bluebee
 
@@ -182,8 +182,8 @@ void Initialize() {
 //	GPIO_PULLUP);
 
 	/*****Motor*****/
-	IMU_Init(&IMU, &huart5);
-//	ch0x0Init(&ch010, &huart2);
+	IMU_Init(&IMU, &huart2);
+//	ch0x0Init(&ch010, &huart3);
 //	PWMEncoder_Angle(&htim1, GPIOC, GPIO_PIN_0, &enc1);
 //	VESCInit(BOTTOMSHOOT, LOADING, 0, 0, &vesc);
 //

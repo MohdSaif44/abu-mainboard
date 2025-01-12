@@ -99,10 +99,10 @@ void MODNUpdate(MODN_t *modn)
 		*(modn->vel3) = sqrt(SQ(modn->b)+SQ(modn->c));
 		*(modn->vel4) = sqrt(SQ(modn->b)+SQ(modn->d));
 
-		*(modn->dir1) = atan2f((modn->a),(modn->c))*(180/M_PI);
-		*(modn->dir2) = atan2f((modn->a),(modn->d))*(180/M_PI);
-		*(modn->dir3) = atan2f((modn->b),(modn->c))*(180/M_PI);
-		*(modn->dir4) = atan2f((modn->b),(modn->d))*(180/M_PI);
+		*(modn->dir1) = atan2f((modn->a),(modn->d))*(180/M_PI);
+		*(modn->dir2) = atan2f((modn->a),(modn->c))*(180/M_PI);
+		*(modn->dir3) = atan2f((modn->b),(modn->d))*(180/M_PI);
+		*(modn->dir4) = atan2f((modn->b),(modn->c))*(180/M_PI);
 		break;
 
 	case MODN_TRI_SWERVE:

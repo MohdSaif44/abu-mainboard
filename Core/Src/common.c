@@ -12,7 +12,7 @@ void set(void) {
 	sys.flag16=0;
 	Initialize();
 	PSxSlaveInit(&ps4, &hi2c1);
-	TIMxInit(&htim7, 1000, 84);			// 1ms
+	TIMxInit(&htim7, 5000, 84);			// 5ms
 	TIMxInit(&htim9, 65535, 74);		// Encoder Alignment
 	SwerveInit(FWD_SWERVE, unlimitedturn, swerve_max_turn, robot_width, robot_lenght, swerve_gear_ratio);
 	SwerveAligninit(GPIO_PIN_0, GPIO_PIN_1, GPIO_PIN_2, GPIO_PIN_3);
@@ -90,6 +90,10 @@ void reset_enc(void) {
 
 void kalman_filter_update(void){
 
+	PWMEncoder_Angle_Update(&enc1);
+	PWMEncoder_Angle_Update(&enc2);
+	PWMEncoder_Angle_Update(&enc3);
+	PWMEncoder_Angle_Update(&enc4);
 	KalmanFilter_5ms(&KF1);
 	KalmanFilter_5ms(&KF2);
 	KalmanFilter_5ms(&KF3);
@@ -99,7 +103,8 @@ void kalman_filter_update(void){
 
 void shooter_heading(float x_pos, float y_pos){
 
-	atan2f(y_pos - BASKET_Y, x_pos - BASKET_X);
+	heading_rad = atan2f(y_pos - BASKET_Y, x_pos - BASKET_X);
+	heading_deg = heading_rad*180/M_PI;
 
 }
 
