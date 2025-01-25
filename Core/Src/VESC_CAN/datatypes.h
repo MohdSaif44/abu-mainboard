@@ -37,6 +37,7 @@
 
 // Settings
 #define VESC_CAN1
+
 //#define VESCedit
 
 typedef struct{

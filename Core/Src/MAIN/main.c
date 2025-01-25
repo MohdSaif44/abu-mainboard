@@ -12,9 +12,9 @@ int main(void) {
 
 	set();
 
-//	const osThreadAttr_t MicrorosTask_attributes =
-//	{ .name = "MicrorosTask", .stack_size = 3000 * 4,
-//			.priority = (osPriority_t) osPriorityHigh,   };
+	const osThreadAttr_t MicrorosTask_attributes =
+	{ .name = "MicrorosTask", .stack_size = 3000 * 4,
+			.priority = (osPriority_t) osPriorityHigh,   };
 
 	const osThreadAttr_t MainTask_attributes =
 	{ .name = "MainTask", .stack_size = 256 * 4,
@@ -38,7 +38,7 @@ int main(void) {
 	osKernelInitialize();
 
 	MainTaskHandle		  = osThreadNew(MainTask, NULL, &MainTask_attributes);
-//	MicrorosTaskHandle    = osThreadNew(Microros, NULL, &MicrorosTask_attributes);
+	MicrorosTaskHandle    = osThreadNew(Microros, NULL, &MicrorosTask_attributes);
 	SecondaryTaskHandle   = osThreadNew(SecondaryTask, NULL, &SecondaryTask_attributes);
 	CalculationTaskHandle = osThreadNew(Calculation, NULL, &CalculationTask_attributes);
 	CalcSemaphore 		  = osSemaphoreNew(1, 0, &CalcSemaphore_attributes);
@@ -68,16 +68,12 @@ void TIM7_IRQHandler(void) { 		// 5ms
 	osSemaphoreRelease(CalcSemaphore);
 	osSemaphoreRelease(PathplanSemaphore);
 
-/*
 	if(++rbms_count>1){
 		RBMS_5ms(&rbms2);
 		RBMS_Set_Target_Velocity(&rbms2, RBMS5, rbms5);
-		RBMS_Set_Target_Position(&rbms2, RBMS6, rbms6);
-		RBMS_Set_Target_Position(&rbms2, RBMS7, rbms7);
-		shaft2 = shaft1 - rbms2.motor[1].shaft_pos;
 		rbms_count = 0;
 	}
-*/
+
 
 	if (++led > 4){
 //		HAL_I2C_Master_Receive_IT(&hi2c3, 0x35 << 1, (uint8_t*)IMU.Buffer, 20);
@@ -95,10 +91,13 @@ float x_factor, y_factor, raw_x, raw_y, actual_x, actual_y;
 
 void MainTask(void *argument) {
 
-	z_target_angle 		= 0.0;
-	vesc.pole_pairs 	= 28;
-	vesc.gear_ratio 	= 2;
-	vesc.wheel_diameter = 0.079;
+	z_target_angle 		 = 0.0;
+	vesc.pole_pairs 	 = 28;
+	vesc.gear_ratio 	 = 2;
+	vesc.wheel_diameter  = 0.079;
+	vesc1.pole_pairs 	 = 14;
+	vesc1.gear_ratio 	 = 1.8;
+	vesc1.wheel_diameter = 0.0442;
 
 	while (1) {
 
@@ -106,10 +105,10 @@ void MainTask(void *argument) {
 
 
 		x_factor = -(QEIRead(QEI4)* 0.05 * M_PI/ 8192.0);
-		y_factor = (QEIRead(QEI1)* 0.05 * M_PI/ 8192.0);
+		y_factor =  (QEIRead(QEI1)* 0.05 * M_PI/ 8192.0);
 
-		actual_x += -(((QEIRead(QEI4) - raw_x)*cos(IMU.real_zrad) - (QEIRead(QEI1) - raw_y)*sin(IMU.real_zrad)) * 0.05 * M_PI/ 8192.0);
-		actual_y +=  (((QEIRead(QEI1) - raw_y)*cos(IMU.real_zrad) + (QEIRead(QEI4) - raw_x)*sin(IMU.real_zrad)) * 0.05 * M_PI/ 8192.0);
+		actual_y += (((QEIRead(QEI4) - raw_x)*cos(IMU.real_zrad) - (QEIRead(QEI1) - raw_y)*sin(IMU.real_zrad)) * 0.05 * M_PI/ 8192.0);
+		actual_x += (((QEIRead(QEI1) - raw_y)*cos(IMU.real_zrad) + (QEIRead(QEI4) - raw_x)*sin(IMU.real_zrad)) * 0.05 * M_PI/ 8192.0);
 		raw_x =  QEIRead(QEI4);
 		raw_y =  QEIRead(QEI1);
 
@@ -134,6 +133,8 @@ void MainTask(void *argument) {
 
 		}
 
+		reciver_heading = atan2f((local_msg.local_y-local_msg3.local_y),(local_msg.local_x - local_msg3.local_x)) * 180.0/M_PI;
+
 		static uint8_t led = 0;
 		if (++led >= 255) {
 			led2 = !led2;
@@ -156,7 +157,7 @@ void SecondaryTask(void *argument) {
 
 		}
 
-		if(ps4.button & L1){
+	/*	if(ps4.button & L1){
 
 			while(ps4.button & L1);
 
@@ -189,7 +190,15 @@ void SecondaryTask(void *argument) {
 
 			L1_count = 0;
 
-		}
+		}*/
+
+	if(ps4.button & L1){
+		rbms5 = -0.1;
+	}
+	if(ps4.button & L1){
+		rbms5 = 0.1;
+	}
+
 	}
 }
 
@@ -225,37 +234,17 @@ void Calculation(void *argument) { 	// 7ms
 
 		}
 
-		if(ps4.button == UP){
+		if(ps4.button == CIRCLE){
 
-			shaft1 = rbms2.motor[1].shaft_pos;
-			osDelay(1000);
-			sys.flag11=1;
-
+//			VESCVelocity(5.0, 5.0, 0, 0, &vesc1);
+			comm_can_set_current(VESC5, 50.0);
+			comm_can_set_current(VESC6, 50.0);
 		}
 
-		if(sys.flag11){
-
-			if(shaft2 > 0.001 || shaft2 < -0.001){
-
-				rbms6 = -0.1;
-				rbms7 = 0.1;
-				sys.flag11 = 0;
-
-			}
-		}
-
-		if(ps4.button == TRIANGLE){
-
-			rbms6 = 0.15;
-			rbms7 = -0.15;
-
-		}
 
 		if(ps4.button == DOWN){
 
 			rbms5 = 0.0;
-			rbms6 = 0.0;
-			rbms7 = 0.0;
 		}
 
 		if(ps4.button == LEFT){
@@ -331,55 +320,68 @@ void Calculation(void *argument) { 	// 7ms
 	}
 }
 
-//void Microros(void *argument){
-//
-//	MX_USB_DEVICE_Init();
-//
-//	microros_init(&hpcd_USB_OTG_FS, "node", 2);
-//
-//	/******* Publisher *******/
-//	rclc_publisher_init_best_effort(
-//	  &publisher,
-//	  &node,
-//	  ROSIDL_GET_MSG_TYPE_SUPPORT(utmrbc_msgs, msg, Odometry),
-//	  "/ekf_input");
-//
-//	/******* Subscriper *******/
-//	rclc_subscription_init_best_effort(
-//	  &subscriber,
-//	  &node,
-//	  ROSIDL_GET_MSG_TYPE_SUPPORT(utmrbc_msgs, msg, Local),
-//	  "/final_pose");
-//
-//	rclc_subscription_init_best_effort(
-//	  &subscriber2,
-//	  &node,
-//	  ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32),
-//	  "/basket_x_coordinate");
-//
-//	rclc_executor_add_subscription(
-//	  &executor,
-//	  &subscriber,
-//	  &local_msg,
-//	  &subscription1_callback,
-//	  ON_NEW_DATA);
-//
-//	rclc_executor_add_subscription(
-//	  &executor,
-//	  &subscriber2,
-//	  &Float32,
-//	  &subscription1_callback,
-//	  ON_NEW_DATA);
-//
-//	while(1){
-//
-//		rclc_executor_spin_some(&executor, 50 * 1000000);
-//		rcl_publish(&publisher, &ekf_msg, NULL);
-//		osDelay(1);
-//
-//	}
-//
-//}
+void Microros(void *argument){
+
+	MX_USB_DEVICE_Init();
+
+	microros_init(&hpcd_USB_OTG_FS, "node", 2);
+
+	/******* Publisher *******/
+	rclc_publisher_init_best_effort(
+	  &publisher,
+	  &node,
+	  ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Point32),
+	  "/encoder");
+
+	/******* Subscriper *******/
+	rclc_subscription_init_best_effort(
+	  &subscriber,
+	  &node,
+	  ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Point32),
+	  "/local");
+
+	rclc_subscription_init_best_effort(
+	  &subscriber3,
+	  &node,
+	  ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Point32),
+	  "/kd/local");
+
+/*	rclc_subscription_init_best_effort(
+	  &subscriber2,
+	  &node,
+	  ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32),
+	  "/basket_x_coordinate");*/
+
+	rclc_executor_add_subscription(
+	  &executor,
+	  &subscriber,
+	  &local,
+	  &subscription1_callback,
+	  ON_NEW_DATA);
+
+	rclc_executor_add_subscription(
+	  &executor,
+	  &subscriber3,
+	  &local_kd,
+	  &subscription1_callback,
+	  ON_NEW_DATA);
+
+/*	rclc_executor_add_subscription(
+	  &executor,
+	  &subscriber2,
+	  &Float32,
+	  &subscription1_callback,
+	  ON_NEW_DATA);*/
+
+	while(1){
+
+		rclc_executor_spin_some(&executor, 50 * 1000000);
+		rcl_publish(&publisher, &encoder, NULL);
+		osDelay(1);
+
+	}
+
+}
 
 
 
@@ -448,8 +450,9 @@ void update_param(void){
 //	prev_x_pos = CURRENT_X_POS;
 //	prev_y_pos = CURRENT_Y_POS;
 
-	ekf_msg.odom_pose_x = x_ekf_pos;
-	ekf_msg.odom_pose_y = y_ekf_pos;
+	encoder.x = actual_x;
+	encoder.y = actual_y;
+	encoder.z = IMU.real_z;
 
 /*	ekf_msg.imu_angular_vx		= ch010.hi91.gyr[1];
 	ekf_msg.imu_angular_vy		= ch010.hi91.gyr[0];

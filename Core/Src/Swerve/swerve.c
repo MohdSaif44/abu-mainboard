@@ -76,29 +76,33 @@ void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, f
 
 			x_vel = joy_x_vel;				/*(ps4.joyL_x*cos(-IMU.real_zrad)-ps4.joyL_y*sin(-IMU.real_zrad));*/
 			y_vel = joy_y_vel;				/*(ps4.joyL_x*sin(-IMU.real_zrad)+ps4.joyL_y*cos(-IMU.real_zrad));*/
-			w_vel = joy_w_vel;
-			z_target_angle = 0.0;
 
 
-//			if(fabs(ps4.joyR_2) + fabs(ps4.joyL_2) > 0.05){
-//
-//				w_vel = joy_w_vel;
-//				z_target_angle = IMU.real_z;
-//
-//			}else{
-//
-//				w_vel = (-0.35)*pid_angle_output;
-//
-//
-//			}
+			if(ps4.button != R1){
 
-			if(ps4.button & R1){
+				if(fabs(joy_w_vel) > 0.05){
 
+					w_vel = joy_w_vel;
+					z_target_angle = IMU.real_z;
+
+				}else if(fabs(joy_y_vel) + fabs(joy_x_vel) > 0.05){
+
+					w_vel = (-0.35)*pid_angle_output;
+
+
+				}else{
+
+					w_vel = 0.0;
+
+				}
+
+			}else{
+
+				z_target_angle = reciver_heading;
 				w_vel = (-0.35)*pid_angle_output;
 
 			}
 
-			/*-(ps4.joyR_2 - ps4.joyL_2)*1.2;*/
 		}
 		else if (mode == pathplan)
 		{

@@ -399,6 +399,7 @@ float Ax_max, tVx, tVy, tVw, step_w, step_x, step_y, full_step_x, full_step_y, f
 float cx, vx, vy, error_x, error_y, target_pos_x, target_pos_y, z_target_angle, xcam_error, rbms5, rbms6, rbms7, shaft1, shaft2;
 uint8_t L1_count;
 float rbms_rotate, heading_rad, heading_deg;
+float reciver_heading;
 
 typedef enum{
 	RNS_PACKET,

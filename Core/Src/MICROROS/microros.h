@@ -21,6 +21,7 @@ extern "C" {
 #include <std_msgs/msg/int16.h>
 #include <utmrbc_msgs/msg/odometry.h>
 #include <utmrbc_msgs/msg/local.h>
+#include <geometry_msgs/msg/point32.h>
 #include <std_msgs/msg/float32.h>
 
 
@@ -40,12 +41,13 @@ rclc_executor_t executor, executor2;
 
 /* Default examples ------------------------------------------------------------------*/
 rcl_publisher_t publisher;
-rcl_subscription_t subscriber, subscriber2;
+rcl_subscription_t subscriber, subscriber2, subscriber3;
 //rcl_service_t service;
 //rcl_client_t client;
 utmrbc_msgs__msg__Odometry ekf_msg;
-utmrbc_msgs__msg__Local local_msg;
+utmrbc_msgs__msg__Local local_msg, local_msg3;
 std_msgs__msg__Float32 Float32;
+geometry_msgs__msg__Point32 encoder, local, local_kd;
 //nav_msgs__msg__Odometry odom_filtered_msg;
 //example_interfaces__srv__AddTwoInts_Request request_msg;
 //example_interfaces__srv__AddTwoInts_Request__Sequence sequence_msg;
