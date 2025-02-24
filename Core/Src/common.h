@@ -30,8 +30,8 @@ PCD_HandleTypeDef hpcd_USB_OTG_FS;
 #define swerve_max_turn  	4.0
 #define robot_width   		0.616
 #define robot_lenght  		0.616
-#define BASKET_Y            10
-#define BASKET_X            3.75
+#define BASKET_Y            8.5
+#define BASKET_X            4
 
 
 #define hall_sensor1_pin	GPIOC, GPIO_PIN_8

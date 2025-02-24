@@ -24,10 +24,10 @@ void set(void) {
 	KalmanFilter_Init(&enc3.Angle, &filtered_enc3, 1.0, 1.0, 0.001, 1.0, 1.0, &KF3);
 	KalmanFilter_Init(&enc4.Angle, &filtered_enc4, 1.0, 1.0, 0.001, 1.0, 1.0, &KF4);
 	RBMS_Init(&rbms2, &hcan2, RBMS_5678);
-	RBMS_Config(&rbms2, RBMS5, C620, 1);
+	RBMS_Config(&rbms2, RBMS5, C620, 3.4);
 //	RBMS_Config(&rbms2, RBMS8, C620, 1);
 	RBMS_PID_Init(&rbms2);
-	RBMS_Set_Control_Mode(&rbms2, RBMS5, VELOCITY);
+	RBMS_Set_Control_Mode(&rbms2, RBMS5, POSITION);
 	RBMS_Set_Control_Mode(&rbms2, RBMS6, POSITION);
 	RBMS_Set_Control_Mode(&rbms2, RBMS7, POSITION);
 //	RBMS_Set_Control_Mode(&rbms2, RBMS8, VELOCITY);
@@ -39,7 +39,7 @@ void set(void) {
 	PIDGainInit(0.005, 0.7, 1.0, 1.0, 5.0, 0.0, 0.0, 20.0, &y_pid);
 	//X_cam
 	PIDSourceInit(&xcam_error, &cx, &c_pid);
-	PIDGainInit(0.005, 20.0, 1.2, 1.2, 0.23, 0.01, 0.001, 20.0, &c_pid);
+	PIDGainInit(0.005, 20.0, 1.2, 1.2, 0.12, 0.07, 0.003, 20.0, &c_pid);
 
 //	TIMxInit(&htim6, 50, 84);			// 50us use for SoftPWM
 //	watchdoginit(4, 4);   // use the watchdog refresh inside 5ms loop
@@ -104,8 +104,9 @@ void kalman_filter_update(void){
 
 void shooter_heading(float x_pos, float y_pos){
 
-	heading_rad = atan2f(y_pos - BASKET_Y, x_pos - BASKET_X);
-	heading_deg = heading_rad*180/M_PI;
+	heading_rad  = atan2f(BASKET_Y - y_pos, BASKET_X - x_pos);
+	heading_deg  = heading_rad*180/M_PI - 90.0;
+	heading_rbms = (heading_deg / 360.0) - (IMU.real_z / 360.0);
 
 }
 

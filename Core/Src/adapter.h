@@ -398,7 +398,7 @@ float x_ekf_pos, y_ekf_pos, prev_x_pos, prev_y_pos, x_vel, y_vel, prev_yaw, v_ya
 float Ax_max, tVx, tVy, tVw, step_w, step_x, step_y, full_step_x, full_step_y, full_step_w, Vw, A_max, Vx, Vy, ax_max, ay_max, joy_x_vel, joy_y_vel, joy_w_vel;
 float cx, vx, vy, error_x, error_y, target_pos_x, target_pos_y, z_target_angle, xcam_error, rbms5, rbms6, rbms7, shaft1, shaft2;
 uint8_t L1_count;
-float rbms_rotate, heading_rad, heading_deg;
+float rbms_rotate, heading_rad, heading_deg, heading_rbms;
 float reciver_heading;
 
 typedef enum{

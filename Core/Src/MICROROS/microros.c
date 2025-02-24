@@ -5,7 +5,9 @@ bool cubemx_transport_close(struct uxrCustomTransport * transport);
 size_t cubemx_transport_write(struct uxrCustomTransport* transport, const uint8_t * buf, size_t len, uint8_t * err);
 size_t cubemx_transport_read(struct uxrCustomTransport* transport, uint8_t* buf, size_t len, int timeout, uint8_t* err);
 
-void microros_init(void* custom_transport_handler, const char * node_name, const size_t executor_number_of_handles){
+rcl_ret_t error;
+
+rcl_ret_t microros_init(void* custom_transport_handler, const char * node_name, const size_t executor_number_of_handles){
 
 	rmw_uros_set_custom_transport(
 			true, (void*) &custom_transport_handler,
@@ -25,13 +27,20 @@ void microros_init(void* custom_transport_handler, const char * node_name, const
 
 	allocator = rcl_get_default_allocator();
 
-	rclc_support_init(&support, 0, NULL, &allocator);
+
+	rcl_init_options_t init_options = rcl_get_zero_initialized_init_options();
+	rcl_init_options_init(&init_options, allocator);
+	rcl_init_options_set_domain_id(&init_options, 7);
+	error = rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator);
+
+
+//	error =  rclc_support_init(&support, 0, NULL, &allocator);
 
 	rclc_node_init_default(&node, node_name, "", &support);
 
 	executor = rclc_executor_get_zero_initialized_executor();
 	rclc_executor_init(&executor, &support.context, executor_number_of_handles, &allocator);
 
+	return error;
+
 }
-
-

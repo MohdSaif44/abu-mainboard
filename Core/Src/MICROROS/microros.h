@@ -31,8 +31,7 @@ void microros_deallocate(void * pointer, void * state);
 void * microros_reallocate(void * pointer, size_t size, void * state);
 void * microros_zero_allocate(size_t number_of_elements, size_t size_of_element, void * state);
 
-void microros_init(void* custom_transport_handler, const char * node_name, const size_t executor_number_of_handles);
-
+rcl_ret_t microros_init(void* custom_transport_handler, const char * node_name, const size_t executor_number_of_handles);
 /* Variables ------------------------------------------------------------------*/
 rclc_support_t support;
 rcl_allocator_t allocator;
@@ -45,7 +44,7 @@ rcl_subscription_t subscriber, subscriber2, subscriber3;
 //rcl_service_t service;
 //rcl_client_t client;
 utmrbc_msgs__msg__Odometry ekf_msg;
-utmrbc_msgs__msg__Local local_msg, local_msg3;
+utmrbc_msgs__msg__Local local_msg;
 std_msgs__msg__Float32 Float32;
 geometry_msgs__msg__Point32 encoder, local, local_kd;
 //nav_msgs__msg__Odometry odom_filtered_msg;

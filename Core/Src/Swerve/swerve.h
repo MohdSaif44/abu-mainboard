@@ -58,6 +58,7 @@ struct {
 	float aligntolerance;
 	float alignspeed;
 	float alignangle;
+	uint16_t timeout;
 } swerve;
 
 

@@ -61,14 +61,16 @@ void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, f
 			PIDDelayInit(&imu_rotate);
 			x_vel = ps4.joyL_x;
 			y_vel = ps4.joyL_y;
-			w_vel = -(ps4.joyR_2 - ps4.joyL_2)*1.8;
+			w_vel = joy_w_vel;
 		}
 		else if (mode == manuallock)
 		{
-			PID(&imu_rotate);
-			x_vel = ps4.joyL_x;
-			y_vel = ps4.joyL_y;
-			w_vel = (-1)*pid_angle_output;
+			//			PID(&imu_rotate);
+			pid_angle_error = z_target_angle - IMU.real_z;
+
+			x_vel = 0.0;
+			y_vel = joy_y_vel;
+			w_vel = (-0.35)*pid_angle_output;
 		}
 		else if (mode == perspective)
 		{
@@ -87,7 +89,7 @@ void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, f
 
 				}else if(fabs(joy_y_vel) + fabs(joy_x_vel) > 0.05){
 
-					w_vel = (-0.35)*pid_angle_output;
+					w_vel = (-0.475)*pid_angle_output;
 
 
 				}else{
@@ -99,7 +101,7 @@ void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, f
 			}else{
 
 				z_target_angle = reciver_heading;
-				w_vel = (-0.35)*pid_angle_output;
+				w_vel = (-1.1)*pid_angle_output;
 
 			}
 
@@ -156,6 +158,7 @@ void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, f
 			}
 			else
 			{
+
 				if (swerve.type == FWD_SWERVE)
 				{
 					swerve.fvel[0] = 0.0;
@@ -223,7 +226,8 @@ void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, f
 		{
 			if (swerve.run)
 			{
-				swerve.run = 0;
+				swerve.timeout = 0;
+				swerve.run     = 0;
 
 				if (swerve.type == FWD_SWERVE)
 				{
@@ -282,7 +286,7 @@ void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, f
 					swerve.fvel[2] = v3 * swerve.sign[2] * max_speed * fabs(cos((swerve.finalangdif[2]) * (M_PI / 180.0))) ;
 					swerve.fvel[3] = v4 * swerve.sign[3] * max_speed * fabs(cos((swerve.finalangdif[3]) * (M_PI / 180.0))) ;
 
-//					VESCPDC(swerve.fvel[0], swerve.fvel[1], swerve.fvel[2], swerve.fvel[3], &vesc);
+					//					VESCPDC(swerve.fvel[0], swerve.fvel[1], swerve.fvel[2], swerve.fvel[3], &vesc);
 					VESCRPM(swerve.fvel[0]*6720*2, swerve.fvel[1]*6720*2, swerve.fvel[2]*6720*2, swerve.fvel[3]*6720*2, &vesc);
 
 
@@ -298,78 +302,84 @@ void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, f
 			}
 			else
 			{
+//				if(++swerve.timeout > 500){
+//					swerve.timeout = 0;
 
-				if (swerve.type == FWD_SWERVE)
-				{
-					swerve.fvel[0] = 0.0;
-					swerve.fvel[1] = 0.0;
-					swerve.fvel[2] = 0.0;
-					swerve.fvel[3] = 0.0;
-
-					if (swerve.braketimer < brake_time)
+					if (swerve.type == FWD_SWERVE)
 					{
-						swerve.braketimer++;
+						swerve.fvel[0] = 0.0;
+						swerve.fvel[1] = 0.0;
+						swerve.fvel[2] = 0.0;
+						swerve.fvel[3] = 0.0;
 
-						VESCCurrBrake(brake_current, &vesc);
-
-						RBMS_Set_Target_Position(&rbms1, RBMS1, swerve.finalang[0] / 360.0 + swerve.closestzero[0]);
-						RBMS_Set_Target_Position(&rbms1, RBMS2, swerve.finalang[1] / 360.0 + swerve.closestzero[1]);
-						RBMS_Set_Target_Position(&rbms1, RBMS3, swerve.finalang[2] / 360.0 + swerve.closestzero[2]);
-						RBMS_Set_Target_Position(&rbms1, RBMS4, swerve.finalang[3] / 360.0 + swerve.closestzero[3]);
-					}
-					else
-					{
-						if (swerve.returnzero == 1)
+						if (swerve.braketimer < brake_time)
 						{
-							RBMS_Set_Target_Position(&rbms1, RBMS1, 0);
-							RBMS_Set_Target_Position(&rbms1, RBMS2, 0);
-							RBMS_Set_Target_Position(&rbms1, RBMS3, 0);
-							RBMS_Set_Target_Position(&rbms1, RBMS4, 0);
+							swerve.braketimer++;
 
-							for(int i = 0; i < 4; i++)
-							{
-								swerve.ang[i] = 0.0;
-								swerve.angprev[i] = 0.0;
-								swerve.addvalue[i] = 0.0;
-								swerve.fang[i] = 0.0;
-								swerve.fangprev[i] = 0.0;
-								swerve.finalang[i] = 0.0;
-								swerve.finalangprev[i] = 0.0;
-								swerve.closestzero[i] = 0.0;
-								swerve.state[i] = 0;
-							}
+							VESCCurrBrake(brake_current, &vesc);
+
+							RBMS_Set_Target_Position(&rbms1, RBMS1, swerve.finalang[0] / 360.0 + swerve.closestzero[0]);
+							RBMS_Set_Target_Position(&rbms1, RBMS2, swerve.finalang[1] / 360.0 + swerve.closestzero[1]);
+							RBMS_Set_Target_Position(&rbms1, RBMS3, swerve.finalang[2] / 360.0 + swerve.closestzero[2]);
+							RBMS_Set_Target_Position(&rbms1, RBMS4, swerve.finalang[3] / 360.0 + swerve.closestzero[3]);
 						}
 						else
 						{
-							if (swerve.getclosestzero == 1)
+							if (swerve.returnzero == 1)
 							{
-								swerve.closestzero[0] = roundf(swerve.finalang[0] / 360.0) + swerve.closestzero[0];
-								swerve.closestzero[1] = roundf(swerve.finalang[1] / 360.0) + swerve.closestzero[1];
-								swerve.closestzero[2] = roundf(swerve.finalang[2] / 360.0) + swerve.closestzero[2];
-								swerve.closestzero[3] = roundf(swerve.finalang[2] / 360.0) + swerve.closestzero[3];
-								swerve.getclosestzero = 0;
-							}
-							RBMS_Set_Target_Position(&rbms1, RBMS4, swerve.closestzero[0]);
-							RBMS_Set_Target_Position(&rbms1, RBMS2, swerve.closestzero[1]);
-							RBMS_Set_Target_Position(&rbms1, RBMS3, swerve.closestzero[2]);
-							RBMS_Set_Target_Position(&rbms1, RBMS1, swerve.closestzero[3]);
+								RBMS_Set_Target_Position(&rbms1, RBMS1, 0);
+								RBMS_Set_Target_Position(&rbms1, RBMS2, 0);
+								RBMS_Set_Target_Position(&rbms1, RBMS3, 0);
+								RBMS_Set_Target_Position(&rbms1, RBMS4, 0);
 
-							for(int i = 0; i < 4; i++)
+								for(int i = 0; i < 4; i++)
+								{
+									swerve.ang[i] = 0.0;
+									swerve.angprev[i] = 0.0;
+									swerve.addvalue[i] = 0.0;
+									swerve.fang[i] = 0.0;
+									swerve.fangprev[i] = 0.0;
+									swerve.finalang[i] = 0.0;
+									swerve.finalangprev[i] = 0.0;
+									swerve.closestzero[i] = 0.0;
+									swerve.state[i] = 0;
+								}
+							}
+							else
 							{
-								swerve.ang[i] = 0.0;
-								swerve.angprev[i] = 0.0;
-								swerve.addvalue[i] = 0.0;
-								swerve.fang[i] = 0.0;
-								swerve.fangprev[i] = 0.0;
-								swerve.finalang[i] = 0.0;
-								swerve.finalangprev[i] = 0.0;
-								swerve.state[i] = 0;
+								if (swerve.getclosestzero == 1)
+								{
+									swerve.closestzero[0] = roundf(swerve.finalang[0] / 360.0) + swerve.closestzero[0];
+									swerve.closestzero[1] = roundf(swerve.finalang[1] / 360.0) + swerve.closestzero[1];
+									swerve.closestzero[2] = roundf(swerve.finalang[2] / 360.0) + swerve.closestzero[2];
+									swerve.closestzero[3] = roundf(swerve.finalang[2] / 360.0) + swerve.closestzero[3];
+									swerve.getclosestzero = 0;
+								}
+								RBMS_Set_Target_Position(&rbms1, RBMS4, swerve.closestzero[0]);
+								RBMS_Set_Target_Position(&rbms1, RBMS2, swerve.closestzero[1]);
+								RBMS_Set_Target_Position(&rbms1, RBMS3, swerve.closestzero[2]);
+								RBMS_Set_Target_Position(&rbms1, RBMS1, swerve.closestzero[3]);
+
+								for(int i = 0; i < 4; i++)
+								{
+									swerve.ang[i] = 0.0;
+									swerve.angprev[i] = 0.0;
+									swerve.addvalue[i] = 0.0;
+									swerve.fang[i] = 0.0;
+									swerve.fangprev[i] = 0.0;
+									swerve.finalang[i] = 0.0;
+									swerve.finalangprev[i] = 0.0;
+									swerve.state[i] = 0;
+								}
 							}
 						}
+						VESCReleaseMotor(&vesc);
+						VESCStop(&vesc);
 					}
-					VESCReleaseMotor(&vesc);
-					VESCStop(&vesc);
-				}
+
+
+//				}
+
 
 			}
 		}
@@ -421,9 +431,9 @@ void SwerveAlign(float A_angle, float B_angle, float C_angle, float D_angle, GPI
 					else if(rbms1.motor[RBMS1].t_pos < -0.5)
 					{ swerve.done[0] = 2; }
 					if(swerve.done[0] == 0)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos + 0.005); }
+					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos + 0.007); }
 					else
-					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos - 0.005); }
+					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos - 0.007); }
 				}
 				else
 				{ swerve.done[0] = 2; }
@@ -435,9 +445,9 @@ void SwerveAlign(float A_angle, float B_angle, float C_angle, float D_angle, GPI
 					else if(rbms1.motor[RBMS2].t_pos < -0.5)
 					{ swerve.done[1] = 2; }
 					if(swerve.done[1] == 0)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos + 0.005); }
+					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos + 0.007); }
 					else
-					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos - 0.005); }
+					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos - 0.007); }
 				}
 				else
 				{ swerve.done[1] = 2; }
@@ -449,9 +459,9 @@ void SwerveAlign(float A_angle, float B_angle, float C_angle, float D_angle, GPI
 					else if(rbms1.motor[RBMS3].t_pos < -0.5)
 					{ swerve.done[2] = 2; }
 					if(swerve.done[2] == 0)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos + 0.005); }
+					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos + 0.007); }
 					else
-					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos - 0.005); }
+					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos - 0.007); }
 				}
 				else
 				{ swerve.done[2] = 2; }
@@ -463,9 +473,9 @@ void SwerveAlign(float A_angle, float B_angle, float C_angle, float D_angle, GPI
 					else if(rbms1.motor[RBMS4].t_pos < -0.5)
 					{ swerve.done[3] = 2; }
 					if(swerve.done[3] == 0)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos + 0.005); }
+					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos + 0.007); }
 					else
-					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos - 0.005); }
+					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos - 0.007); }
 				}
 				else
 				{ swerve.done[3] = 2; }
@@ -552,6 +562,8 @@ void SwerveAlign(float A_angle, float B_angle, float C_angle, float D_angle, GPI
 					else if(!IP12_IN)
 					{ swerve.aligndone[3] = 1; }
 				}
+
+				swerve.aligndone[3] = 1;
 
 				if ((swerve.aligndone[0]==1) && (swerve.aligndone[1]==1) && (swerve.aligndone[2]==1) && (swerve.aligndone[3]==1))
 				{
