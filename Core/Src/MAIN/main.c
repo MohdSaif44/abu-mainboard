@@ -282,15 +282,17 @@ void Calculation(void *argument) { 	// 5ms
 
 		if(sys.manual){
 
-			SwerveAlign(94.0, 226.0, 73.0, 111.0, hall_sensor1_pin, hall_sensor2_pin, hall_sensor3_pin, hall_sensor4_pin);
+			SwerveAlign(94.0, 226.0, 307.0, 111.0, hall_sensor1_pin, hall_sensor2_pin, hall_sensor3_pin, hall_sensor4_pin);
 
 //			D : 70.0
 
-			SwerveRun(1.0, drive_mode, 20.0, 30, 0);
+			SwerveRun(1.0, drive_mode, 20.0, 100, 0);
 
 			if(swerve.aligned == 1){
 
 				if(fabs(joy_x_vel)+fabs(joy_y_vel)+fabs(w_vel)+fabs(ps4.joyR_2 - ps4.joyL_2) > 0.0){
+
+					MODNUpdate(&modn);
 
 					swerve.run = 1;
 
@@ -488,6 +490,7 @@ float clamp(float min,float value,float max){
 
 	}
 }
+float ratio_vel;
 
 void vel_ramp(){
 
@@ -503,6 +506,7 @@ void vel_ramp(){
 	full_step_y	=	tVy-Vy;
 	full_step_w =   tVw-Vw;
 
+
 	joy_x_vel+=  clamp(-step_x,full_step_x,step_x);
 	joy_y_vel+=  clamp(-step_y,full_step_y,step_y);
 	joy_w_vel+=  clamp(-step_w,full_step_w,step_w);
@@ -512,47 +516,13 @@ void vel_ramp(){
 	Vw=joy_w_vel;
 }
 
-void demo2_pathplan(float target_x, float target_y, float tolerance_x, float tolerance_y){
-
-	target_pos_x = target_x;
-	target_pos_y = target_y;
-	osDelay(1);
-	PID(&x_pid);
-	PID(&y_pid);
-	osDelay(1);
-	if(fabs(*y_pid.error) < tolerance_x){
-		if(fabs(*x_pid.error) < tolerance_y){
-			*y_pid.error   = 0;
-			*x_pid.error   = 0;
-			*y_pid.out_put = 0;
-			*x_pid.out_put = 0;
-			sys.automatic  = 0;
-			sys.manual     = 1;
-		}
-	}
-
-}
 
 void stop_all(void){
 
 	VESCStop(&vesc);
 	VESCCurrBrake(20, &vesc);
-	//	vx = 0.0;
-	//	vy = 0.0;
 	swerve.run = 0;
 	//	sys.automatic = 0;
-	//	error_x    = 0;
-	//	error_y    = 0;
-	//	xcam_error = 0;
-	//	PIDDelayInit(&x_pid);
-	//	PIDDelayInit(&y_pid);
-	//	PIDDelayInit(&c_pid);
-	//	*y_pid.error = 0;
-	//	*x_pid.error = 0;
-	//	*c_pid.error = 0;
-	//	*y_pid.out_put = 0;
-	//	*x_pid.out_put = 0;
-	//	*c_pid.out_put = 0;
 	HAL_NVIC_SystemReset();
 	sys.manual = 1;
 

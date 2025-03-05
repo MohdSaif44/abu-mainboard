@@ -89,7 +89,7 @@ void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, f
 
 				}else if(fabs(joy_y_vel) + fabs(joy_x_vel) > 0.05){
 
-					w_vel = (-0.475)*pid_angle_output;
+					w_vel = (-0.125)*pid_angle_output;
 
 
 				}else{
@@ -101,7 +101,7 @@ void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, f
 			}else{
 
 				z_target_angle = reciver_heading;
-				w_vel = (-1.1)*pid_angle_output;
+				w_vel = (-0.2)*pid_angle_output;
 
 			}
 
@@ -114,8 +114,6 @@ void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, f
 			w_vel = (-1)*pid_angle_output;
 
 		}
-
-		MODNUpdate(&modn);
 
 
 		if (swerve.turnmode == halfturn)
@@ -287,7 +285,7 @@ void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, f
 					swerve.fvel[3] = v4 * swerve.sign[3] * max_speed * fabs(cos((swerve.finalangdif[3]) * (M_PI / 180.0))) ;
 
 					//					VESCPDC(swerve.fvel[0], swerve.fvel[1], swerve.fvel[2], swerve.fvel[3], &vesc);
-					VESCRPM(swerve.fvel[0]*6720*2, swerve.fvel[1]*6720*2, swerve.fvel[2]*6720*2, swerve.fvel[3]*6720*2, &vesc);
+					VESCRPM(swerve.fvel[0]*6720*4, swerve.fvel[1]*6720*4, swerve.fvel[2]*6720*4, swerve.fvel[3]*6720*4, &vesc);
 
 
 					RBMS_Set_Target_Position(&rbms1, RBMS1, swerve.finalang[0] / 360.0 + swerve.closestzero[0]);
@@ -302,8 +300,7 @@ void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, f
 			}
 			else
 			{
-//				if(++swerve.timeout > 500){
-//					swerve.timeout = 0;
+
 
 					if (swerve.type == FWD_SWERVE)
 					{
@@ -323,8 +320,10 @@ void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, f
 							RBMS_Set_Target_Position(&rbms1, RBMS3, swerve.finalang[2] / 360.0 + swerve.closestzero[2]);
 							RBMS_Set_Target_Position(&rbms1, RBMS4, swerve.finalang[3] / 360.0 + swerve.closestzero[3]);
 						}
-						else
-						{
+
+						if(++swerve.timeout > 500){
+							swerve.timeout = 0;
+
 							if (swerve.returnzero == 1)
 							{
 								RBMS_Set_Target_Position(&rbms1, RBMS1, 0);
@@ -372,13 +371,13 @@ void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, f
 									swerve.state[i] = 0;
 								}
 							}
-						}
+
 						VESCReleaseMotor(&vesc);
 						VESCStop(&vesc);
 					}
 
 
-//				}
+				}
 
 
 			}
@@ -489,18 +488,18 @@ void SwerveAlign(float A_angle, float B_angle, float C_angle, float D_angle, GPI
 
 				if (fabs(swerve.alignerror[0])>180.0)
 				{
-					if((swerve.alignerror[0] >1.0))
+					if((swerve.alignerror[0] >1.5))
 					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos - 0.0005); }
-					else if(swerve.alignerror[0] <-1.0)
+					else if(swerve.alignerror[0] <-1.5)
 					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos + 0.0005); }
 					else if(!IP9_IN)
 					{ swerve.aligndone[0] = 1; }
 				}
 				else
 				{
-					if((swerve.alignerror[0] >1.0))
+					if((swerve.alignerror[0] >1.5))
 					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos + 0.0005); }
-					else if(swerve.alignerror[0] <-1.0)
+					else if(swerve.alignerror[0] <-1.5)
 					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos - 0.0005); }
 					else if(!IP9_IN)
 					{ swerve.aligndone[0] = 1; }
@@ -508,18 +507,18 @@ void SwerveAlign(float A_angle, float B_angle, float C_angle, float D_angle, GPI
 
 				if (fabs(swerve.alignerror[1])>180.0)
 				{
-					if((swerve.alignerror[1] >1.0))
+					if((swerve.alignerror[1] >1.5))
 					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos - 0.0005); }
-					else if(swerve.alignerror[1] <-1.0)
+					else if(swerve.alignerror[1] <-1.5)
 					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos + 0.0005); }
 					else if(!IP5_IN)
 					{ swerve.aligndone[1] = 1; }
 				}
 				else
 				{
-					if((swerve.alignerror[1] >1.0))
+					if((swerve.alignerror[1] >1.5))
 					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos + 0.0005); }
-					else if(swerve.alignerror[1] <-1.0)
+					else if(swerve.alignerror[1] <-1.5)
 					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos - 0.0005); }
 					else if(!IP5_IN)
 					{ swerve.aligndone[1] = 1; }
@@ -527,18 +526,18 @@ void SwerveAlign(float A_angle, float B_angle, float C_angle, float D_angle, GPI
 
 				if (fabs(swerve.alignerror[2])>180.0)
 				{
-					if((swerve.alignerror[2] >1.0))
+					if((swerve.alignerror[2] >1.5))
 					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos - 0.0005); }
-					else if(swerve.alignerror[2] <-1.0)
+					else if(swerve.alignerror[2] <-1.5)
 					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos + 0.0005); }
 					else if(!IP11_IN)
 					{ swerve.aligndone[2] = 1; }
 				}
 				else
 				{
-					if((swerve.alignerror[2] >1.0))
+					if((swerve.alignerror[2] >1.5))
 					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos + 0.0005); }
-					else if(swerve.alignerror[2] <-1.0)
+					else if(swerve.alignerror[2] <-1.5)
 					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos - 0.0005); }
 					else if(!IP11_IN)
 					{ swerve.aligndone[2] = 1; }
@@ -546,18 +545,18 @@ void SwerveAlign(float A_angle, float B_angle, float C_angle, float D_angle, GPI
 
 				if (fabs(swerve.alignerror[3])>180.0)
 				{
-					if((swerve.alignerror[3] >1.0))
+					if((swerve.alignerror[3] >1.5))
 					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos - 0.0005); }
-					else if(swerve.alignerror[3] <-1.0)
+					else if(swerve.alignerror[3] <-1.5)
 					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos + 0.0005); }
 					else if(!IP12_IN)
 					{ swerve.aligndone[3] = 1; }
 				}
 				else
 				{
-					if((swerve.alignerror[3] >1.0))
+					if((swerve.alignerror[3] >1.5))
 					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos + 0.0005); }
-					else if(swerve.alignerror[3] <-1.0)
+					else if(swerve.alignerror[3] <-1.5)
 					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos - 0.0005); }
 					else if(!IP12_IN)
 					{ swerve.aligndone[3] = 1; }
