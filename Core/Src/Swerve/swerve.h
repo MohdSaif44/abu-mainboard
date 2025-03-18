@@ -25,6 +25,32 @@ enum{
 	unlimitedturn,
 };
 
+
+typedef enum{
+	SWERVE_CLOCKWISE,
+	SWERVE_ANTICLOCKWISE,
+	SWERVE_ALLIGN_ENC,
+	SWERVE_ALLIGNED,
+}swerve_aligning_status;
+
+typedef struct{
+	swerve_aligning_status alligning_status;
+	uint8_t RBMSID;
+	float alligning_angle2;
+	float alligning_angle1;
+	float enc_target_err;
+	float enc_output;
+	PID_t enc_align_pid;
+	uint8_t swerve_init;
+	float enc_target;
+	float cur_enc_angle;
+	float prev_enc_angle;
+	int turns;
+	float raw_enc_angle;
+	float * enc;
+
+}swerve_allign_t;
+
 struct {
 	int type;
 	int turnmode;
@@ -61,12 +87,17 @@ struct {
 	uint16_t timeout;
 } swerve;
 
-
 /***prototype function***/
+swerve_allign_t swerveA, swerveB, swerveC, swerveD;
+void swerve_enc_init(GPIO_TypeDef * encGPIOx, uint16_t encGPIO_Pin);
+void swerve_init(swerve_allign_t* swerve, float swerve_gear_ratio, uint8_t rbmsid, float * enc);
+void swerve_allign(swerve_allign_t* swerve, GPIO_TypeDef * hallGPIOx, uint16_t hallGPIO_Pin, float offset, float enc_target);
+
 void SwerveInit(int swerve_type, int turn_mode, float maximum_turn, float width, float length, float swerve_gear_ratio);
 void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, float target_angle);
 void SwerveEnq(UART_HandleTypeDef* huartx);
-void SwerveAligninit(uint16_t A_GPIO_Pin, uint16_t B_GPIO_Pin, uint16_t C_GPIO_Pin, uint16_t D_GPIO_Pin);
-void SwerveAlign(float A_angle, float B_angle, float C_angle, float D_angle, GPIO_TypeDef * AhallsGPIOx, uint16_t AhallsGPIO_Pin, GPIO_TypeDef * BhallsGPIOx, uint16_t BhallsGPIO_Pin, GPIO_TypeDef * ChallsGPIOx, uint16_t ChallsGPIO_Pin, GPIO_TypeDef * DhallsGPIOx, uint16_t DhallsGPIO_Pin);
+
+//void SwerveAligninit(uint16_t A_GPIO_Pin, uint16_t B_GPIO_Pin, uint16_t C_GPIO_Pin, uint16_t D_GPIO_Pin);
+//void SwerveAlign(float A_angle, float B_angle, float C_angle, float D_angle, GPIO_TypeDef * AhallsGPIOx, uint16_t AhallsGPIO_Pin, GPIO_TypeDef * BhallsGPIOx, uint16_t BhallsGPIO_Pin, GPIO_TypeDef * ChallsGPIOx, uint16_t ChallsGPIO_Pin, GPIO_TypeDef * DhallsGPIOx, uint16_t DhallsGPIO_Pin);
 
 #endif /* SRC_SWERVE_SWERVE_H_ */

@@ -86,6 +86,10 @@ osEventFlagsId_t evt_id;
 osThreadId_t MicrorosTaskHandle;
 osThreadId_t MainTaskHandle;
 osThreadId_t SecondaryTaskHandle;
+osThreadId_t SwerveATaskHandle;
+osThreadId_t SwerveBTaskHandle;
+osThreadId_t SwerveCTaskHandle;
+osThreadId_t SwerveDTaskHandle;
 osThreadId_t CalculationTaskHandle;
 //osThreadId_t ModbusTaskHandle;
 
