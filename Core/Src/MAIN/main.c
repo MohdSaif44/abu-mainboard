@@ -24,6 +24,22 @@ int main(void) {
 	{ .name = "SecondTask", .stack_size = 128 * 4,
 			.priority = (osPriority_t) osPriorityNormal, };
 
+	const osThreadAttr_t SwerveATask_attributes =
+	{ .name = "SwerveATask", .stack_size = 256 * 2, .priority =
+			(osPriority_t) osPriorityNormal, };
+
+	const osThreadAttr_t SwerveBTask_attributes =
+	{ .name = "SwerveBTask", .stack_size = 256 * 2, .priority =
+			(osPriority_t) osPriorityNormal, };
+
+	const osThreadAttr_t SwerveCTask_attributes =
+	{ .name = "SwerveCTask", .stack_size = 256 * 2, .priority =
+			(osPriority_t) osPriorityNormal, };
+
+	const osThreadAttr_t SwerveDTask_attributes =
+	{ .name = "SwerveDTask", .stack_size = 256 * 2, .priority =
+			(osPriority_t) osPriorityNormal, };
+
 	const osThreadAttr_t CalculationTask_attributes =
 	{ .name = "CalculationTask", .stack_size = 256 * 4,
 			.priority = (osPriority_t) osPriorityNormal, };
@@ -40,6 +56,10 @@ int main(void) {
 	MainTaskHandle		  = osThreadNew(MainTask, NULL, &MainTask_attributes);
 	MicrorosTaskHandle    = osThreadNew(Microros, NULL, &MicrorosTask_attributes);
 	SecondaryTaskHandle   = osThreadNew(SecondaryTask, NULL, &SecondaryTask_attributes);
+	SwerveATaskHandle 	  = osThreadNew(SwerveATask, NULL, &SwerveATask_attributes);
+	SwerveBTaskHandle     = osThreadNew(SwerveBTask, NULL, &SwerveBTask_attributes);
+	SwerveCTaskHandle     = osThreadNew(SwerveCTask, NULL, &SwerveCTask_attributes);
+	SwerveDTaskHandle     = osThreadNew(SwerveDTask, NULL, &SwerveDTask_attributes);
 	CalculationTaskHandle = osThreadNew(Calculation, NULL, &CalculationTask_attributes);
 	CalcSemaphore 		  = osSemaphoreNew(1, 0, &CalcSemaphore_attributes);
 	MainSemaphore 		  = osSemaphoreNew(1, 0, &MainSemaphore_attributes);
@@ -105,7 +125,7 @@ void TIM7_IRQHandler(void) { 		// 5ms
 	HAL_TIM_IRQHandler(&htim7);
 }
 
-uint8_t hall1,hall2,hall3,hall4;
+//uint8_t hall1,hall2,hall3,hall4;
 uint8_t drive_mode = 4;
 
 float x_factor, y_factor, raw_x, raw_y, actual_x, actual_y;
@@ -219,6 +239,59 @@ void SecondaryTask(void *argument) {
 	}
 }
 
+
+void SwerveATask (void *argument){
+
+	swerve_init(&swerveA, 3, 1, &filtered_enc1);
+	while(1){
+
+		if (swerveA.alligning_status != SWERVE_ALLIGNED) {
+			swerve_allign(&swerveA, IP9_PIN, 0.0, 225.530884);
+		} else {
+			osThreadExit();
+		}
+
+	}
+}
+
+void SwerveBTask (void *argument){
+	swerve_init(&swerveB, 3, 2, &filtered_enc2);
+	while(1){
+
+		if (swerveB.alligning_status != SWERVE_ALLIGNED) {
+			swerve_allign(&swerveB, IP10_PIN, 0.0, 119.392998);
+		} else {
+			osThreadExit();
+		}
+
+	}
+}
+
+void SwerveCTask (void *argument){
+	swerve_init(&swerveC, 3, 3, &filtered_enc3);
+	while(1){
+
+		if(swerveC.alligning_status != SWERVE_ALLIGNED){
+			swerve_allign(&swerveC, IP11_PIN, 0.0, 300.182739);
+		}else{
+			osThreadExit();
+		}
+	}
+}
+
+void SwerveDTask (void *argument){
+	swerve_init(&swerveD, 3, 4, &filtered_enc4);
+	while(1){
+
+		if(swerveD.alligning_status != SWERVE_ALLIGNED){
+			swerve_allign(&swerveD, IP12_PIN, 0.0, 107.817184);
+		}else{
+			osThreadExit();
+		}
+	}
+}
+
+
 uint8_t toggle;
 
 void Calculation(void *argument) { 	// 5ms
@@ -233,16 +306,17 @@ void Calculation(void *argument) { 	// 5ms
 
 //		shooter_heading(local_msg.local_x, local_msg.local_y);
 
-		hall1 = IP9_IN;
-		hall2 = IP5_IN;
-		hall3 = IP11_IN;
-		hall4 = IP12_IN;
+//		hall1 = IP9_IN;
+//		hall2 = IP5_IN;
+//		hall3 = IP11_IN;
+//		hall4 = IP12_IN;
 
 //		if(ps4.button == RIGHT){
 //
 //			comm_can_set_duty(116, 0.7);
 //
 //		}
+		RBMS_5ms(&rbms1);
 
 		if(ps4.button == CROSS){
 
@@ -282,13 +356,16 @@ void Calculation(void *argument) { 	// 5ms
 
 		if(sys.manual){
 
-			SwerveAlign(94.0, 226.0, 307.0, 111.0, hall_sensor1_pin, hall_sensor2_pin, hall_sensor3_pin, hall_sensor4_pin);
+//			SwerveAlign(94.0, 226.0, 307.0, 111.0, hall_sensor1_pin, hall_sensor2_pin, hall_sensor3_pin, hall_sensor4_pin);
 
 //			D : 70.0
 
 			SwerveRun(1.0, drive_mode, 20.0, 100, 0);
 
-			if(swerve.aligned == 1){
+			if(swerveA.alligning_status == SWERVE_ALLIGNED
+					&& swerveB.alligning_status == SWERVE_ALLIGNED
+					&& swerveC.alligning_status == SWERVE_ALLIGNED
+					&& swerveD.alligning_status == SWERVE_ALLIGNED){
 
 				if(fabs(joy_x_vel)+fabs(joy_y_vel)+fabs(w_vel)+fabs(ps4.joyR_2 - ps4.joyL_2) > 0.0){
 

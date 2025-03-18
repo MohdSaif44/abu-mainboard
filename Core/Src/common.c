@@ -17,8 +17,13 @@ void set(void) {
 
 	VESCInit(VESC5, VESC6,VESC7,VESC8, &vesc1); //
 
+	swerve_enc_init(IP16_Analog1_PIN);
+	swerve_enc_init(IP17_Analog2_PIN);
+	swerve_enc_init(IP18_Analog3_PIN);
+	swerve_enc_init(IP19_Analog4_PIN);
+
 	SwerveInit(FWD_SWERVE, unlimitedturn, swerve_max_turn, robot_width, robot_lenght, swerve_gear_ratio);
-	SwerveAligninit(GPIO_PIN_0, GPIO_PIN_1, GPIO_PIN_2, GPIO_PIN_3);
+//	SwerveAligninit(GPIO_PIN_0, GPIO_PIN_1, GPIO_PIN_2, GPI/O_PIN_3);
 	KalmanFilter_Init(&enc1.Angle, &filtered_enc1, 1.0, 1.0, 0.001, 1.0, 1.0, &KF1);
 	KalmanFilter_Init(&enc2.Angle, &filtered_enc2, 1.0, 1.0, 0.001, 1.0, 1.0, &KF2);
 	KalmanFilter_Init(&enc3.Angle, &filtered_enc3, 1.0, 1.0, 0.001, 1.0, 1.0, &KF3);

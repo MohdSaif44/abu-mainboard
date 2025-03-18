@@ -52,12 +52,14 @@ void SwerveInit(int swerve_type, int turn_mode, float maximum_turn, float width,
 
 void SwerveRun(float max_speed, int mode, float brake_current, int brake_time, float target_angle)
 {
-	RBMS_5ms(&rbms1);
 
-	if (swerve.aligned)
+
+	if (swerveA.alligning_status == SWERVE_ALLIGNED
+			&& swerveB.alligning_status == SWERVE_ALLIGNED
+			&& swerveC.alligning_status == SWERVE_ALLIGNED
+			&& swerveD.alligning_status == SWERVE_ALLIGNED)
 	{
-		if (mode == manualnolock)
-		{
+		if (mode == manualnolock) {
 			PIDDelayInit(&imu_rotate);
 			x_vel = ps4.joyL_x;
 			y_vel = ps4.joyL_y;
@@ -391,192 +393,163 @@ void SwerveEnq(UART_HandleTypeDef* huartx)
 
 }
 
-void SwerveAligninit(uint16_t A_GPIO_Pin, uint16_t B_GPIO_Pin, uint16_t C_GPIO_Pin, uint16_t D_GPIO_Pin)
-{
-	if (swerve.type == FWD_SWERVE)
-	{
-		GPIOPinsInit(GPIOC, A_GPIO_Pin, GPIO_MODE_IT_RISING_FALLING, GPIO_SPEED_FREQ_HIGH,GPIO_NOPULL);//IP16_Analog1_PIN
-		GPIOPinsInit(GPIOC, B_GPIO_Pin, GPIO_MODE_IT_RISING_FALLING, GPIO_SPEED_FREQ_HIGH,GPIO_NOPULL);//IP17_Analog2_PIN
-		GPIOPinsInit(GPIOC, C_GPIO_Pin, GPIO_MODE_IT_RISING_FALLING, GPIO_SPEED_FREQ_HIGH,GPIO_NOPULL);//IP18_Analog3_PIN
-		GPIOPinsInit(GPIOC, D_GPIO_Pin, GPIO_MODE_IT_RISING_FALLING, GPIO_SPEED_FREQ_HIGH,GPIO_NOPULL);//IP19_Analog4_PIN
-		ExtixInit(A_GPIO_Pin, 9, 0, &ExtiPin); //GPIO_PIN_0
-		ExtixInit(B_GPIO_Pin, 9, 1, &ExtiPin); //GPIO_PIN_1
-		ExtixInit(C_GPIO_Pin, 9, 2, &ExtiPin); //GPIO_PIN_2
-		ExtixInit(D_GPIO_Pin, 9, 3, &ExtiPin); //GPIO_PIN_3
-	}
-
+void swerve_enc_init(GPIO_TypeDef * encGPIOx, uint16_t encGPIO_Pin){
+	GPIOPinsInit(encGPIOx, encGPIO_Pin, GPIO_MODE_IT_RISING_FALLING, GPIO_SPEED_FREQ_HIGH,GPIO_NOPULL);
+	uint32_t prior = encGPIO_Pin - 1;
+	ExtixInit(encGPIO_Pin, 9, prior, &ExtiPin);
 }
 
-void SwerveAlign(float A_angle, float B_angle, float C_angle, float D_angle, GPIO_TypeDef * AhallsGPIOx, uint16_t AhallsGPIO_Pin, GPIO_TypeDef * BhallsGPIOx, uint16_t BhallsGPIO_Pin, GPIO_TypeDef * ChallsGPIOx, uint16_t ChallsGPIO_Pin, GPIO_TypeDef * DhallsGPIOx, uint16_t DhallsGPIO_Pin)
-{
-	swerve.aligntolerance   = 5.0;
-	swerve.alignspeed 		= 0.005;
-	swerve.alignangle		= 0.5;
 
-	if (swerve.type == FWD_SWERVE)
-	{
-		PWMEncoder_Angle_Update(&enc1);
-		PWMEncoder_Angle_Update(&enc2);
-		PWMEncoder_Angle_Update(&enc3);
-		PWMEncoder_Angle_Update(&enc4);
-		if (swerve.aligned == 0)
-		{
-			if (swerve.done[0] != 2 || swerve.done[1] != 2 || swerve.done[2] != 2 || swerve.done[3] != 2)
-			{
-				if((HAL_GPIO_ReadPin(AhallsGPIOx, AhallsGPIO_Pin) != 0) && swerve.done[0] < 2)
-				{
-					if(rbms1.motor[RBMS1].t_pos > 0.5)
-					{ swerve.done[0] = 1; }
-					else if(rbms1.motor[RBMS1].t_pos < -0.5)
-					{ swerve.done[0] = 2; }
-					if(swerve.done[0] == 0)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos + 0.007); }
-					else
-					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos - 0.007); }
-				}
-				else
-				{ swerve.done[0] = 2; }
+void swerve_init(swerve_allign_t* swerve, float swerve_gear_ratio, uint8_t rbmsid, float * enc){
+//	swerve_v2.turnmode = unlimitedturn;
+	swerve->RBMSID = rbmsid - 1;
 
-				if((HAL_GPIO_ReadPin(BhallsGPIOx, BhallsGPIO_Pin) != 0) && swerve.done[1] < 2)
-				{
-					if(rbms1.motor[RBMS2].t_pos > 0.5)
-					{ swerve.done[1] = 1; }
-					else if(rbms1.motor[RBMS2].t_pos < -0.5)
-					{ swerve.done[1] = 2; }
-					if(swerve.done[1] == 0)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos + 0.007); }
-					else
-					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos - 0.007); }
-				}
-				else
-				{ swerve.done[1] = 2; }
+	RBMS_Config(&rbms1, swerve->RBMSID, C610, swerve_gear_ratio); //FL
+	RBMS_PID_Init(&rbms1);
 
-				if((HAL_GPIO_ReadPin(ChallsGPIOx, ChallsGPIO_Pin) != 0) && swerve.done[2] < 2)
-				{
-					if(rbms1.motor[RBMS3].t_pos > 0.5)
-					{ swerve.done[2] = 1; }
-					else if(rbms1.motor[RBMS3].t_pos < -0.5)
-					{ swerve.done[2] = 2; }
-					if(swerve.done[2] == 0)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos + 0.007); }
-					else
-					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos - 0.007); }
-				}
-				else
-				{ swerve.done[2] = 2; }
+	swerve->enc = enc;
 
-				if((HAL_GPIO_ReadPin(DhallsGPIOx, DhallsGPIO_Pin) != 0) && swerve.done[3] < 2)
-				{
-					if(rbms1.motor[RBMS4].t_pos > 0.5)
-					{ swerve.done[3] = 1; }
-					else if(rbms1.motor[RBMS4].t_pos < -0.5)
-					{ swerve.done[3] = 2; }
-					if(swerve.done[3] == 0)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos + 0.007); }
-					else
-					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos - 0.007); }
-				}
-				else
-				{ swerve.done[3] = 2; }
-			}
-			else
-			{
-				swerve.alignerror[0] = A_angle - enc1.Angle;
-				swerve.alignerror[1] = B_angle - enc2.Angle;
-				swerve.alignerror[2] = C_angle - enc3.Angle;
-				swerve.alignerror[3] = D_angle - enc4.Angle;
+	PIDSourceInit(&swerve->enc_target_err, &swerve->enc_output, &swerve->enc_align_pid);
+	PIDGainInit(0.005, 1.0, 1.0/180.0, 1.0, 5.0, 0.0, 0.001, 60, &swerve->enc_align_pid);
 
-				if (fabs(swerve.alignerror[0])>180.0)
-				{
-					if((swerve.alignerror[0] >1.5))
-					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos - 0.0005); }
-					else if(swerve.alignerror[0] <-1.5)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos + 0.0005); }
-					else if(!IP9_IN)
-					{ swerve.aligndone[0] = 1; }
-				}
-				else
-				{
-					if((swerve.alignerror[0] >1.5))
-					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos + 0.0005); }
-					else if(swerve.alignerror[0] <-1.5)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS1, rbms1.motor[RBMS1].t_pos - 0.0005); }
-					else if(!IP9_IN)
-					{ swerve.aligndone[0] = 1; }
-				}
+	swerve->swerve_init = 1;
+//	PIDGainInit(ts, sat, ke, ku, kp, ki, kd, kn, pid);
+}
 
-				if (fabs(swerve.alignerror[1])>180.0)
-				{
-					if((swerve.alignerror[1] >1.5))
-					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos - 0.0005); }
-					else if(swerve.alignerror[1] <-1.5)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos + 0.0005); }
-					else if(!IP5_IN)
-					{ swerve.aligndone[1] = 1; }
-				}
-				else
-				{
-					if((swerve.alignerror[1] >1.5))
-					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos + 0.0005); }
-					else if(swerve.alignerror[1] <-1.5)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS2, rbms1.motor[RBMS2].t_pos - 0.0005); }
-					else if(!IP5_IN)
-					{ swerve.aligndone[1] = 1; }
-				}
 
-				if (fabs(swerve.alignerror[2])>180.0)
-				{
-					if((swerve.alignerror[2] >1.5))
-					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos - 0.0005); }
-					else if(swerve.alignerror[2] <-1.5)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos + 0.0005); }
-					else if(!IP11_IN)
-					{ swerve.aligndone[2] = 1; }
-				}
-				else
-				{
-					if((swerve.alignerror[2] >1.5))
-					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos + 0.0005); }
-					else if(swerve.alignerror[2] <-1.5)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS3, rbms1.motor[RBMS3].t_pos - 0.0005); }
-					else if(!IP11_IN)
-					{ swerve.aligndone[2] = 1; }
-				}
+//credit to Mr. VinCent
+void swerve_allign(swerve_allign_t* swerve, GPIO_TypeDef * hallGPIOx, uint16_t hallGPIO_Pin, float offset, float enc_target){
 
-				if (fabs(swerve.alignerror[3])>180.0)
-				{
-					if((swerve.alignerror[3] >1.5))
-					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos - 0.0005); }
-					else if(swerve.alignerror[3] <-1.5)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos + 0.0005); }
-					else if(!IP12_IN)
-					{ swerve.aligndone[3] = 1; }
-				}
-				else
-				{
-					if((swerve.alignerror[3] >1.5))
-					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos + 0.0005); }
-					else if(swerve.alignerror[3] <-1.5)
-					{ RBMS_Set_Target_Position(&rbms1, RBMS4, rbms1.motor[RBMS4].t_pos - 0.0005); }
-					else if(!IP12_IN)
-					{ swerve.aligndone[3] = 1; }
-				}
 
-				swerve.aligndone[3] = 1;
+	switch(swerve->alligning_status){
+	case SWERVE_CLOCKWISE:
+		swerve->alligning_angle1 = 0.0;
+		swerve->alligning_angle2 = 0.0;
+		swerve->cur_enc_angle = 0.0;
+		swerve->enc_output = 0.0;
+		swerve->enc_target_err = 0.0;
+		swerve->prev_enc_angle = 0.0;
+		swerve->turns = 0;
+		swerve->enc_target = enc_target;
 
-				if ((swerve.aligndone[0]==1) && (swerve.aligndone[1]==1) && (swerve.aligndone[2]==1) && (swerve.aligndone[3]==1))
-				{
-					swerve.aligned = 1;
-					rbms1.motor[0].reset_pos = 1;
-					rbms1.motor[1].reset_pos = 1;
-					rbms1.motor[2].reset_pos = 1;
-					rbms1.motor[3].reset_pos = 1;
-					rbms1.motor[0].offset_pos = 0.25;
-					rbms1.motor[1].offset_pos = 0.25;
-					rbms1.motor[2].offset_pos = 0.25;
-					rbms1.motor[3].offset_pos = 0.25;
-				}
+		rbms1.motor[swerve->RBMSID].config.vel_limit = 500; //high speed will caz detector didnt detect
+		RBMS_Set_Control_Mode(&rbms1, swerve->RBMSID, VELOCITY);
+
+		if (HAL_GPIO_ReadPin(hallGPIOx, hallGPIO_Pin) == 1) {
+			RBMS_Set_Target_Velocity(&rbms1, swerve->RBMSID, -500.0);
+			while (HAL_GPIO_ReadPin(hallGPIOx, hallGPIO_Pin) == 1) {
+				RBMS_Set_Target_Velocity(&rbms1, swerve->RBMSID, -500.0);
+				swerve->alligning_angle2 = rbms1.motor[swerve->RBMSID].pos;
+
 			}
 		}
+		RBMS_Set_Target_Velocity(&rbms1, swerve->RBMSID, 0.0);
+		swerve->alligning_status = SWERVE_ANTICLOCKWISE;
+		break;
+
+	case SWERVE_ANTICLOCKWISE:
+		osDelay(100);
+		if (fabs(swerve->alligning_angle2) < 0.45) { //Mr V use 0.25 caz he got 2 hall XD
+			swerve->alligning_angle1 = (swerve->alligning_angle2 - rbms1.motor[swerve->RBMSID].pos);
+			RBMS_Set_Control_Mode(&rbms1, swerve->RBMSID, POSITION);
+			RBMS_Set_Target_Position(&rbms1, swerve->RBMSID, swerve->alligning_angle1);
+			osDelay(250);
+			RBMS_Set_Control_Mode(&rbms1, swerve->RBMSID, POSITION);
+			swerve->alligning_status = SWERVE_ALLIGN_ENC;
+		}
+
+		else {
+//			RBMS_Set_Control_Mode(&rbms1, swerve->RBMSID, VELOCITY);
+			RBMS_Set_Target_Velocity(&rbms1, swerve->RBMSID, 500.0);
+			osDelay(100); //uncomment if ur rbms speed limit is slow
+
+			while (HAL_GPIO_ReadPin(hallGPIOx, hallGPIO_Pin) == 1) {
+				RBMS_Set_Target_Velocity(&rbms1, swerve->RBMSID, 500.0);
+				swerve->alligning_angle2 = rbms1.motor[swerve->RBMSID].pos;
+			}
+
+			swerve->alligning_angle1 = (swerve->alligning_angle2 - rbms1.motor[swerve->RBMSID].pos);
+			RBMS_Set_Control_Mode(&rbms1, swerve->RBMSID, POSITION);
+			RBMS_Set_Target_Position(&rbms1, swerve->RBMSID, swerve->alligning_angle1);
+			osDelay(250);
+			RBMS_Set_Control_Mode(&rbms1, swerve->RBMSID, POSITION);
+			swerve->alligning_status = SWERVE_ALLIGN_ENC;
+
+			RBMS_Set_Target_Velocity(&rbms1, swerve->RBMSID, 0.0);
+			osDelay(100);
+
+		}
+		break;
+
+
+
+	case SWERVE_ALLIGN_ENC:
+		RBMS_Set_Control_Mode(&rbms1, swerve->RBMSID, VELOCITY);
+
+		uint32_t swervecount = 0;
+		while((swervecount<500000 || HAL_GPIO_ReadPin(hallGPIOx, hallGPIO_Pin) == 1) || swerve->enc_target_err > 0.5){
+			RBMS_Set_Target_Velocity(&rbms1, swerve->RBMSID, swerve->enc_output*100.0);
+			swervecount++;
+		}
+		RBMS_Set_Target_Velocity(&rbms1, swerve->RBMSID, 0);
+		osDelay(100);
+		RBMS_Set_Control_Mode(&rbms1, swerve->RBMSID, POSITION);
+		osDelay(100);
+
+		//if alignment fail, it will keep restart.
+		if(HAL_GPIO_ReadPin(hallGPIOx, hallGPIO_Pin) == 1){
+			swerve->alligning_status = SWERVE_CLOCKWISE;
+		}else{
+			rbms1.motor[swerve->RBMSID].config.vel_limit = 500;
+			RBMS_Set_Control_Mode(&rbms1, swerve->RBMSID, POSITION);
+			RBMS_Set_Target_Position(&rbms1, swerve->RBMSID, offset);
+			osDelay(1000);
+			RBMS_Set_Control_Mode(&rbms1, swerve->RBMSID, POSITION);
+			osDelay(500);
+			swerve->alligning_status = SWERVE_ALLIGNED;
+
+		}
+
+//		swerve->alligning_status = SWERVE_ALLIGNED;
+
+
+		break;
+
+	case SWERVE_ALLIGNED:
+
+
+		break;
+	}
+}
+
+void SwerveCalcAngle(swerve_allign_t* swerve){
+//	if(swerve == &swerveA){PWMEncoder_Angle_Update(&enc1); swerve->raw_enc_angle = enc1.Angle;}
+//	if(swerve == &swerveB){PWMEncoder_Angle_Update(&enc2); swerve->raw_enc_angle = enc2.Angle;}
+//	if(swerve == &swerveC){PWMEncoder_Angle_Update(&enc3); swerve->raw_enc_angle = enc3.Angle;}
+//	if(swerve == &swerveD){PWMEncoder_Angle_Update(&enc4); swerve->raw_enc_angle = enc4.Angle;}
+
+//	PWMEncoder_Angle_Update(swerve->enc);
+	swerve->raw_enc_angle = *(swerve->enc);
+
+
+	if (swerve->swerve_init == 1) {
+
+		/*
+		 * The value after correction too weird, sus the magnetic enc jumping, need KF
+		 *
+		 if (swerve->raw_enc_angle - swerve->prev_enc_angle < -350) {
+		 swerve->turns++;
+		 } else if (swerve->raw_enc_angle - swerve->prev_enc_angle > 350) {
+		 swerve->turns--;
+		 }
+		 swerve->cur_enc_angle = (float)swerve->turns * 360.0 + swerve->raw_enc_angle;
+		 swerve->prev_enc_angle = swerve->raw_enc_angle;
+
+
+		 */
+
+		swerve->cur_enc_angle = swerve->raw_enc_angle;
+		swerve->enc_target_err = swerve->enc_target - swerve->cur_enc_angle;
+		PID(&swerve->enc_align_pid);
 	}
 }

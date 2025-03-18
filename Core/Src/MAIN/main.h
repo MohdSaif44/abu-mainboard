@@ -9,7 +9,7 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "../common.h"
 #include "../adapter.h"
-#include "/home/saif/STM32CubeIDE/workspace_1.15.1/mainboard_updated_demo_2_old/Core/Src/MICROROS/microros.h"
+#include "../MICROROS/microros.h"
 
 #define STOP_CONDITION fabs(x_vel) + fabs(y_vel) + fabs(w_vel) < 0.05
 //#define CURRENT_X_POS  -((QEIRead(QEI4)*cos(IMU.real_zrad) + QEIRead(QEI1)*sin(IMU.real_zrad)) * 0.05 * M_PI/ 8192.0)
@@ -19,6 +19,10 @@ extern "C" {
 
 void MainTask(void *argument);
 void SecondaryTask (void *argument);
+void SwerveATask (void *argument);
+void SwerveBTask (void *argument);
+void SwerveCTask (void *argument);
+void SwerveDTask (void *argument);
 void Calculation(void *argument);
 void Microros(void *argument);
 void subscription1_callback (const void * msgin);
