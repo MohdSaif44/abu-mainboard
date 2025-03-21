@@ -172,6 +172,12 @@ void MainTask(void *argument) {
 
 		}
 
+		SwerveCalcAngle(&swerveA);
+		SwerveCalcAngle(&swerveB);
+		SwerveCalcAngle(&swerveC);
+		SwerveCalcAngle(&swerveD);
+
+
 		__HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_2, 1000);
 
 //		if(ps4.button & DOWN){
@@ -246,9 +252,10 @@ void SwerveATask (void *argument){
 	while(1){
 
 		if (swerveA.alligning_status != SWERVE_ALLIGNED) {
-			swerve_allign(&swerveA, IP9_PIN, 0.0, 225.530884);
+			swerve_allign(&swerveA, IP9_PIN, 0.25, 221.530884);
 		} else {
-			osThreadExit();
+//			osDelay(500);
+//			osThreadExit();
 		}
 
 	}
@@ -259,9 +266,10 @@ void SwerveBTask (void *argument){
 	while(1){
 
 		if (swerveB.alligning_status != SWERVE_ALLIGNED) {
-			swerve_allign(&swerveB, IP10_PIN, 0.0, 119.392998);
+			swerve_allign(&swerveB, IP10_PIN, 0.25, 119.392998);
 		} else {
-			osThreadExit();
+//			osDelay(500);
+//			osThreadExit();
 		}
 
 	}
@@ -272,9 +280,10 @@ void SwerveCTask (void *argument){
 	while(1){
 
 		if(swerveC.alligning_status != SWERVE_ALLIGNED){
-			swerve_allign(&swerveC, IP11_PIN, 0.0, 300.182739);
+			swerve_allign(&swerveC, IP11_PIN, 0.25, 296.182739);
 		}else{
-			osThreadExit();
+//			osDelay(500);
+//			osThreadExit();
 		}
 	}
 }
@@ -284,9 +293,10 @@ void SwerveDTask (void *argument){
 	while(1){
 
 		if(swerveD.alligning_status != SWERVE_ALLIGNED){
-			swerve_allign(&swerveD, IP12_PIN, 0.0, 107.817184);
+			swerve_allign(&swerveD, IP12_PIN, 0.25, 106.817184);
 		}else{
-			osThreadExit();
+//			osDelay(500);
+//			osThreadExit();
 		}
 	}
 }
